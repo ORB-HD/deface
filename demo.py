@@ -1,4 +1,5 @@
 import argparse
+import tqdm
 
 import cv2
 from centerface import CenterFace
@@ -27,6 +28,11 @@ def video_detect():
     cap = cv2.VideoCapture(ipath)
     frame_width, frame_height = int(cap.get(3)), int(cap.get(4))
     fps = cap.get(cv2.CAP_PROP_FPS)
+    if not isinstance(ipath, int):
+        nframes = cap.get(cv2.CAP_PROP_FRAME_COUNT)
+        bar = tqdm.tqdm(total=nframes)
+    else:
+        bar = tqdm.tqdm()
     if opath is not None:
         out = cv2.VideoWriter(opath,cv2.VideoWriter_fourcc(*'X264'), fps, (frame_width,frame_height))
     ret, frame = cap.read()
@@ -34,6 +40,8 @@ def video_detect():
     centerface = CenterFace()
     while True:
         ret, frame = cap.read()
+        if not ret:
+            break
         dets, lms = centerface(frame, threshold=0.5)
         for det in dets:
             boxes, score = det[:4], det[4]
@@ -59,8 +67,11 @@ def video_detect():
             # Press Q on keyboard to stop recording
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
+        bar.update()
+        
     cap.release()
     out.release()
+    bar.close()
 
 
 if __name__ == '__main__':
