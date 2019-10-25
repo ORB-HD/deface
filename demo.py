@@ -7,7 +7,7 @@ from centerface import CenterFace
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-i', default='0', help='Input file name or camera index')
-parser.add_argument('-o', default='/tmp/deface-output.mp4', help='Output file name.')
+parser.add_argument('-o', default='/tmp/deface-output.mkv', help='Output file name.')
 parser.add_argument('-r', default='box', choices=['box', 'blur', 'none'], help='How to change face regions')
 parser.add_argument('-l', default=False, action='store_true', help='Enable landmark visualization')
 parser.add_argument('-q', default=False, action='store_true', help='Disable GUI')
@@ -23,6 +23,8 @@ replacewith = args.r
 draw_lms = args.l
 show = not args.q
 
+if not opath.endswith('.mkv'):
+    raise RuntimeError('Output path needs to end with .mkv due to OpenCV limitations.')
 
 def video_detect():
     cap = cv2.VideoCapture(ipath)
@@ -30,9 +32,9 @@ def video_detect():
     fps = cap.get(cv2.CAP_PROP_FPS)
     if not isinstance(ipath, int):
         nframes = cap.get(cv2.CAP_PROP_FRAME_COUNT)
-        bar = tqdm.tqdm(total=nframes)
+        bar = tqdm.tqdm(dynamic_ncols=True, total=nframes)
     else:
-        bar = tqdm.tqdm()
+        bar = tqdm.tqdm(dynamic_ncols=True)
     if opath is not None:
         out = cv2.VideoWriter(opath,cv2.VideoWriter_fourcc(*'X264'), fps, (frame_width,frame_height))
     ret, frame = cap.read()
