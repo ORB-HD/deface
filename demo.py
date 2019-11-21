@@ -13,6 +13,7 @@ parser.add_argument('-l', default=False, action='store_true', help='Enable landm
 parser.add_argument('-q', default=False, action='store_true', help='Disable GUI')
 parser.add_argument('-n', default='./centerface.onnx', help='Path to CenterFace ONNX model file')
 parser.add_argument('-e', default=False, action='store_true', help='Disable detection enumeration')
+parser.add_argument('-t', default=0.5, type=float, help='Detection threshold')
 
 args = parser.parse_args()
 
@@ -23,6 +24,7 @@ replacewith = args.r
 draw_lms = args.l
 show = not args.q
 enumerate_dets = not args.e
+threshold = args.t
 
 if not opath.endswith('.mkv'):
     raise RuntimeError('Output path needs to end with .mkv due to OpenCV limitations.')
@@ -42,7 +44,7 @@ def video_detect():
         ret, frame = cap.read()
         if not ret:
             break
-        dets, lms = centerface(frame, threshold=0.5)
+        dets, lms = centerface(frame, threshold=threshold)
         for i, det in enumerate(dets):
             boxes, score = det[:4], det[4]
             x1, y1, x2, y2 = boxes.astype(int)

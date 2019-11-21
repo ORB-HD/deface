@@ -1,6 +1,7 @@
 import numpy as np
 import cv2
 import datetime
+# import numba
 
 
 class CenterFace:
@@ -62,7 +63,9 @@ class CenterFace:
             lms = lms[keep, :]
         return boxes, lms
 
-    def nms(self, boxes, scores, nms_thresh):
+    @staticmethod
+    # @numba.njit()
+    def nms(boxes, scores, nms_thresh):
         x1 = boxes[:, 0]
         y1 = boxes[:, 1]
         x2 = boxes[:, 2]
@@ -70,7 +73,7 @@ class CenterFace:
         areas = (x2 - x1) * (y2 - y1)
         order = np.argsort(scores)[::-1]
         num_detections = boxes.shape[0]
-        suppressed = np.zeros((num_detections,), dtype=np.bool)
+        suppressed = np.zeros((num_detections,), dtype=np.uint8)
         for _i in range(num_detections):
             i = order[_i]
             if suppressed[i]:
