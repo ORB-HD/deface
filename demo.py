@@ -8,11 +8,11 @@ from centerface import CenterFace
 parser = argparse.ArgumentParser()
 parser.add_argument('-i', default='0', help='Input file name or camera index')
 parser.add_argument('-o', default='/tmp/deface-output.mkv', help='Output file name.')
-parser.add_argument('-r', default='box', choices=['box', 'blur', 'none'], help='How to change face regions')
+parser.add_argument('-r', default='blur', choices=['box', 'blur', 'none'], help='How to change face regions')
 parser.add_argument('-l', default=False, action='store_true', help='Enable landmark visualization')
 parser.add_argument('-q', default=False, action='store_true', help='Disable GUI')
 parser.add_argument('-n', default='./centerface.onnx', help='Path to CenterFace ONNX model file')
-
+parser.add_argument('-e', default=False, action='store_true', help='Disable detection enumeration')
 
 args = parser.parse_args()
 
@@ -22,6 +22,7 @@ opath = args.o
 replacewith = args.r
 draw_lms = args.l
 show = not args.q
+enumerate_dets = not args.e
 
 if not opath.endswith('.mkv'):
     raise RuntimeError('Output path needs to end with .mkv due to OpenCV limitations.')
@@ -30,11 +31,8 @@ def video_detect():
     cap = cv2.VideoCapture(ipath)
     frame_width, frame_height = int(cap.get(3)), int(cap.get(4))
     fps = cap.get(cv2.CAP_PROP_FPS)
-    if not isinstance(ipath, int):
-        nframes = cap.get(cv2.CAP_PROP_FRAME_COUNT)
-        bar = tqdm.tqdm(dynamic_ncols=True, total=nframes)
-    else:
-        bar = tqdm.tqdm(dynamic_ncols=True)
+    nframes = cap.get(cv2.CAP_PROP_FRAME_COUNT) if not isinstance(ipath, int) else None
+    bar = tqdm.tqdm(dynamic_ncols=True, total=nframes)
     if opath is not None:
         out = cv2.VideoWriter(opath,cv2.VideoWriter_fourcc(*'X264'), fps, (frame_width,frame_height))
     ret, frame = cap.read()
@@ -45,15 +43,21 @@ def video_detect():
         if not ret:
             break
         dets, lms = centerface(frame, threshold=0.5)
-        for det in dets:
+        for i, det in enumerate(dets):
             boxes, score = det[:4], det[4]
             x1, y1, x2, y2 = boxes.astype(int)
             if replacewith == 'box':
                 cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 0, 0), -1)
             elif replacewith == 'blur':
-                frame[y1:y2, x1:x2] = cv2.blur(frame[y1:y2, x1:x2], (20, 20))
+                bf = 4  # blur factor (number of pixels in each dimension that the face will be reduced to)
+                frame[y1:y2, x1:x2] = cv2.blur(
+                    frame[y1:y2, x1:x2],
+                    (abs(x2 - x1) // bf, abs(y2 - y1) // bf)
+                )
             # elif mode == 'none':
                 # pass
+            if enumerate_dets:
+                cv2.putText(frame, f'{i + 1}', (x1 + 10, y1 + 30), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (128, 255, 128))
         if draw_lms:
             for lm in lms:
                 cv2.circle(frame, (int(lm[0]), int(lm[1])), 2, (0, 0, 255), -1)
