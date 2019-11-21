@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import argparse
 import tqdm
 import json
@@ -9,7 +11,7 @@ from centerface import CenterFace
 parser = argparse.ArgumentParser()
 parser.add_argument('-i', default='0', help='Input file name or camera index')
 parser.add_argument('-o', default='/tmp/deface-output.mkv', help='Output file name.')
-parser.add_argument('-r', default='blur', choices=['box', 'blur', 'none'], help='How to change face regions')
+parser.add_argument('-r', default='blur', choices=['box', 'blur', 'none'], help='Anonymization filter mode for face regions')
 # parser.add_argument('-c', default='red', help='Color hue of the overlays (boxes, texts)')
 parser.add_argument('-l', default=False, action='store_true', help='Enable landmark visualization')
 parser.add_argument('-q', default=False, action='store_true', help='Disable GUI')
@@ -29,6 +31,8 @@ enumerate_dets = not args.e
 threshold = args.t
 # ovcolor = colors.get(args.c, (0, 0, 0))
 
+cam = isinstance(ipath, int)
+
 ovcolor = (255, 0, 0)
 
 if not opath.endswith('.mkv'):
@@ -38,21 +42,23 @@ def video_detect():
     cap = cv2.VideoCapture(ipath)
     frame_width, frame_height = int(cap.get(3)), int(cap.get(4))
     fps = cap.get(cv2.CAP_PROP_FPS)
-    nframes = cap.get(cv2.CAP_PROP_FRAME_COUNT) if not isinstance(ipath, int) else None
+    nframes = cap.get(cv2.CAP_PROP_FRAME_COUNT) if not cam else None
     bar = tqdm.tqdm(dynamic_ncols=True, total=nframes)
     if opath is not None:
         out = cv2.VideoWriter(opath,cv2.VideoWriter_fourcc(*'X264'), fps, (frame_width,frame_height))
     ret, frame = cap.read()
     # h, w = frame.shape[:2]
     centerface = CenterFace()
-    jso = {'frames': {}}
+    if not cam:
+        jso = {'frames': {}}
     while True:
         ret, frame = cap.read()
         if not ret:
             break
-        frame_idx = int(cap.get(cv2.CAP_PROP_POS_FRAMES))
         dets, lms = centerface(frame, threshold=threshold)
-        jso['frames'][frame_idx] = {'faces': {}}
+        if not cam:
+            frame_idx = int(cap.get(cv2.CAP_PROP_POS_FRAMES))
+            jso['frames'][frame_idx] = {'faces': {}}
         for i, det in enumerate(dets):
             boxes, score = det[:4], det[4]
             x1, y1, x2, y2 = boxes.astype(int)
@@ -66,14 +72,14 @@ def video_detect():
                 )
             # elif mode == 'none':
                 # pass
-            jso['frames'][frame_idx]['faces'][i] = {
-                'x1': int(x1), 'y1': int(y1), 'x2': int(x2), 'y2': int(y2), 'score': float(round(score, 2))
-            }
+            if not cam:
+                jso['frames'][frame_idx]['faces'][i] = {
+                    'x1': int(x1), 'y1': int(y1), 'x2': int(x2), 'y2': int(y2),
+                    'score': float(round(score, 2))
+                }
             if enumerate_dets:
                 cv2.putText(
-                    frame,
-                    f'{i + 1}: {score:.2f}',
-                    (x1 +0, y1 - 20),
+                    frame, f'{i + 1}: {score:.2f}', (x1 +0, y1 - 20),
                     cv2.FONT_HERSHEY_SIMPLEX, 1.0, (128, 255, 128)
                 )
 
@@ -94,7 +100,7 @@ def video_detect():
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
         bar.update()
-    if opath is not None:
+    if not cam and opath is not None:
         with open(f'{opath}.json', 'w') as f:
             json.dump(jso, f)
     cap.release()
