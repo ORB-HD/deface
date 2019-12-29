@@ -31,6 +31,7 @@ opath = args.o
 replacewith = args.r
 draw_lms = args.l
 show = not args.q
+onnxpath = args.n
 enumerate_dets = not args.e
 threshold = args.t
 ellipse = args.m
@@ -121,14 +122,22 @@ def video_detect():
     bar = tqdm.tqdm(dynamic_ncols=True, total=nframes)
     if opath is not None:
         out = cv2.VideoWriter(opath,cv2.VideoWriter_fourcc(*'X264'), fps, (frame_width,frame_height))
-    ret, frame = cap.read()
-    centerface = CenterFace()
+    centerface = CenterFace(onnxpath)
+
+    detbuf = []
+
     while True:
         ret, frame = cap.read()
         if not ret:
             break
         # Perform network inference, get bb dets but discard landmark predictions
         dets, _ = centerface(frame, threshold=threshold)
+        detbuf.append(dets)
+
+        def maxfilter(detbuf):
+            return detbuf[-1]  # TODO
+
+        dets = maxfilter(detbuf)
         anonymize_frame(dets, frame)
 
         if opath is not None:
