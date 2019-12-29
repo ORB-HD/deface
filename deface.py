@@ -45,6 +45,26 @@ if not opath.endswith('.mkv'):
     raise RuntimeError('Output path needs to end with .mkv due to OpenCV limitations.')
 
 
+class Detection:
+    # x1: int
+    # y1: int
+    # x2: int
+    # y2: int
+    bbcoords: np.ndarray
+    score: float
+
+    def __init__(self, x1, y1, x2, y2, score):
+        self.bbcoords = np.round([x1, y1, x2, y2]).astype(int)
+        # self.x1, self.y2, self.x2, self.y2 = self.bbcoords
+        self.score = score
+
+    def scale_bb(self, mask_scale):
+        return scale_bb(*self.bbcoords, mask_scale=mask_scale)
+
+    def scale_bb_(self, mask_scale):
+        self.bbcoords = self.scale_bb(mask_scale=mask_scale)
+
+
 def scale_bb(x1, y1, x2, y2, mask_scale=1.0):
     s = mask_scale - 1.0
     h, w = y2 - y1, x2 - x1
@@ -53,6 +73,44 @@ def scale_bb(x1, y1, x2, y2, mask_scale=1.0):
     x1 -= w * s
     x2 += w * s
     return np.round([x1, y1, x2, y2]).astype(int)
+
+
+def draw_det(frame, score, det_idx, x1, y1, x2, y2):
+    if replacewith == 'solid':
+        cv2.rectangle(frame, (x1, y1), (x2, y2), ovcolor, -1)
+    elif replacewith == 'blur':
+        bf = 2  # blur factor (number of pixels in each dimension that the face will be reduced to)
+        blurred_box =  cv2.blur(
+            frame[y1:y2, x1:x2],
+            (abs(x2 - x1) // bf, abs(y2 - y1) // bf)
+        )
+        if ellipse:
+            roibox = frame[y1:y2, x1:x2]
+            # Get y and x coordinate lists of the "bounding ellipse"
+            ey, ex = skimage.draw.ellipse((y2 - y1) // 2, (x2 - x1) // 2, (y2 - y1) // 2, (x2 - x1) // 2)
+            roibox[ey, ex] = blurred_box[ey, ex]
+            frame[y1:y2, x1:x2] = roibox
+        else:
+            frame[y1:y2, x1:x2] = blurred_box
+    elif replacewith == 'none':
+        pass
+    if enumerate_dets:
+        cv2.putText(
+            frame, f'{det_idx + 1}: {score:.2f}', (x1 +0, y1 - 20),
+            cv2.FONT_HERSHEY_SIMPLEX, 1.0, (128, 255, 128)
+        )
+
+
+def anonymize_frame(dets, frame):
+    for i, det in enumerate(dets):
+        boxes, score = det[:4], det[4]
+        x1, y1, x2, y2 = boxes.astype(int)
+        x1, y1, x2, y2 = scale_bb(x1, y1, x2, y2, mask_scale)
+        # Clip bb coordinates to valid frame region
+        y1, y2 = max(0, y1), min(frame.shape[0] - 1, y2)
+        x1, x2 = max(0, x1), min(frame.shape[1] - 1, x2)
+
+        draw_det(frame, score, i, x1, y1, x2, y2)
 
 
 def video_detect():
@@ -64,65 +122,15 @@ def video_detect():
     if opath is not None:
         out = cv2.VideoWriter(opath,cv2.VideoWriter_fourcc(*'X264'), fps, (frame_width,frame_height))
     ret, frame = cap.read()
-    # h, w = frame.shape[:2]
     centerface = CenterFace()
-    if not cam:
-        jso = {'frames': {}}
     while True:
         ret, frame = cap.read()
         if not ret:
             break
-        dets, lms = centerface(frame, threshold=threshold)
-        if not cam:
-            frame_idx = int(cap.get(cv2.CAP_PROP_POS_FRAMES))
-            jso['frames'][frame_idx] = {'faces': {}}
-        for i, det in enumerate(dets):
-            boxes, score = det[:4], det[4]
-            x1, y1, x2, y2 = boxes.astype(int)
+        # Perform network inference, get bb dets but discard landmark predictions
+        dets, _ = centerface(frame, threshold=threshold)
+        anonymize_frame(dets, frame)
 
-            x1, y1, x2, y2 = scale_bb(x1, y1, x2, y2, mask_scale)
-
-            # Clip bb coordinates to valid frame region
-            y1, y2 = max(0, y1), min(frame_height - 1, y2)
-            x1, x2 = max(0, x1), min(frame_width - 1, x2)
-
-            if replacewith == 'solid':
-                cv2.rectangle(frame, (x1, y1), (x2, y2), ovcolor, -1)
-            elif replacewith == 'blur':
-                bf = 2  # blur factor (number of pixels in each dimension that the face will be reduced to)
-                blurred_box =  cv2.blur(
-                    frame[y1:y2, x1:x2],
-                    (abs(x2 - x1) // bf, abs(y2 - y1) // bf)
-                )
-                if ellipse:
-                    roibox = frame[y1:y2, x1:x2]
-                    # Get y and x coordinate lists of the "bounding ellipse"
-                    ey, ex = skimage.draw.ellipse((y2 - y1) // 2, (x2 - x1) // 2, (y2 - y1) // 2, (x2 - x1) // 2)
-                    roibox[ey, ex] = blurred_box[ey, ex]
-                    frame[y1:y2, x1:x2] = roibox
-                else:
-                    frame[y1:y2, x1:x2] = blurred_box
-            # elif mode == 'none':
-                # pass
-            if not cam:
-                jso['frames'][frame_idx]['faces'][i] = {
-                    'x1': int(x1), 'y1': int(y1), 'x2': int(x2), 'y2': int(y2),
-                    'score': float(round(score, 2))
-                }
-            if enumerate_dets:
-                cv2.putText(
-                    frame, f'{i + 1}: {score:.2f}', (x1 +0, y1 - 20),
-                    cv2.FONT_HERSHEY_SIMPLEX, 1.0, (128, 255, 128)
-                )
-
-        if draw_lms:
-            for lm in lms:
-                cv2.circle(frame, (int(lm[0]), int(lm[1])), 2, (0, 0, 255), -1)
-                cv2.circle(frame, (int(lm[2]), int(lm[3])), 2, (0, 0, 255), -1)
-                cv2.circle(frame, (int(lm[4]), int(lm[5])), 2, (0, 0, 255), -1)
-                cv2.circle(frame, (int(lm[6]), int(lm[7])), 2, (0, 0, 255), -1)
-                cv2.circle(frame, (int(lm[8]), int(lm[9])), 2, (0, 0, 255), -1)
-        # hm = cv2.cvtColor(cv2.resize(hm, dsize=(frame_width, frame_height)), cv2.COLOR_GRAY2RGB)
         if opath is not None:
             out.write(frame)
 
@@ -132,9 +140,6 @@ def video_detect():
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
         bar.update()
-    if not cam and opath is not None:
-        with open(f'{opath}.json', 'w') as f:
-            json.dump(jso, f)
     cap.release()
     out.release()
     bar.close()
@@ -142,4 +147,3 @@ def video_detect():
 
 if __name__ == '__main__':
     video_detect()
-    # test_image()
