@@ -1,7 +1,6 @@
 import numpy as np
 import cv2
 import datetime
-# import numba
 
 
 class CenterFace:
@@ -10,6 +9,21 @@ class CenterFace:
         self.in_shape = in_shape
         if self.in_shape is not None:
             self.img_h_new, self.img_w_new, self.scale_h, self.scale_w = self.transform(self.in_shape)
+
+
+        # try:
+        #     import torch
+        #     import torchvision.ops
+        #     print('Using fast torchvision nms...')
+        #     self.nms = self._torch_nms
+        # except:
+        #     import traceback
+        #     traceback.print_exc()
+        #     print('Can\'t import torchvision nms. Using slow python nms...')
+        #     self.nms = self._py_nms
+        # _py_nms actually runs faster in local cpu benchmarks
+        self.nms = self._py_nms
+
 
     def __call__(self, img, threshold=0.5):
         if self.in_shape is None:
@@ -63,9 +77,19 @@ class CenterFace:
             lms = lms[keep, :]
         return boxes, lms
 
+
     @staticmethod
-    # @numba.njit()
-    def nms(boxes, scores, nms_thresh):
+    def _torch_nms(boxes, scores, nms_thresh):
+        import torch
+        import torchvision.ops
+        boxes = torch.as_tensor(boxes)
+        scores = torch.as_tensor(scores)
+        keep = torchvision.ops.nms(boxes, scores, nms_thresh)
+        return keep.numpy()
+
+
+    @staticmethod
+    def _py_nms(boxes, scores, nms_thresh):
         x1 = boxes[:, 0]
         y1 = boxes[:, 1]
         x2 = boxes[:, 2]
