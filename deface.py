@@ -1,49 +1,63 @@
 #!/usr/bin/env python3
 
 import argparse
+import os
 import tqdm
 import json
 import skimage.draw
 import numpy as np
-
+import imageio
+import imageio.plugins.ffmpeg
 import cv2
+
 from centerface import CenterFace
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument('-i', default='0', help='Input file name or camera index')
-parser.add_argument('-o', default='/tmp/deface-output.mkv', help='Output file name.')
+parser.add_argument('-i', default='<video0>', help='Input file name or camera index')
+parser.add_argument('-o', default=None, help='Output file name (defaults to input path + postfix "_anonymized").')
 parser.add_argument('-r', default='blur', choices=['solid', 'blur', 'none'], help='Anonymization filter mode for face regions')
+parser.add_argument('-d', default=None, help='Downsample images for network inference to this size')
 # parser.add_argument('-c', default='red', help='Color hue of the overlays (boxes, texts)')
 parser.add_argument('-l', default=False, action='store_true', help='Enable landmark visualization')
 parser.add_argument('-q', default=False, action='store_true', help='Disable GUI')
 parser.add_argument('-n', default='./centerface.onnx', help='Path to CenterFace ONNX model file')
-parser.add_argument('-e', default=False, action='store_true', help='Disable detection enumeration')
+parser.add_argument('-e', default=False, action='store_true', help='Enable detection enumeration')
 parser.add_argument('-t', default=0.3, type=float, help='Detection threshold')
 parser.add_argument('-m', default=False, action='store_true', help='Use ellipse masks instead of boxes')
 parser.add_argument('-s', default=1.3, type=float, help='Scale factor for face masks (use high values to be on the safe side)')
 
 args = parser.parse_args()
 
+# TODO: Optionally preserve audio track?
+
 ipath = args.i
-ipath = int(ipath) if ipath.isdigit() else ipath
 opath = args.o
 replacewith = args.r
 draw_lms = args.l
 show = not args.q
 onnxpath = args.n
-enumerate_dets = not args.e
+enumerate_dets = args.e
 threshold = args.t
 ellipse = args.m
 mask_scale = args.s
 # ovcolor = colors.get(args.c, (0, 0, 0))
+in_shape = args.d
+if in_shape is not None:
+    w, h = in_shape.split('x')
+    in_shape = int(w), int(h)
 
-cam = isinstance(ipath, int)
 
-ovcolor = (255, 0, 0)
+# cam = isinstance(ipath, int)
+cam = ipath.startswith('<video')
 
-if not opath.endswith('.mkv'):
-    raise RuntimeError('Output path needs to end with .mkv due to OpenCV limitations.')
+if opath is None and not cam:
+    root, ext = os.path.splitext(ipath)
+    opath = f'{root}_anonymized{ext}'
+
+ovcolor = (0, 0, 255)
+
+centerface = CenterFace(onnxpath, in_shape=in_shape)
 
 
 class Detection:
@@ -114,43 +128,49 @@ def anonymize_frame(dets, frame):
         draw_det(frame, score, i, x1, y1, x2, y2)
 
 
-def video_detect():
-    cap = cv2.VideoCapture(ipath)
-    frame_width, frame_height = int(cap.get(3)), int(cap.get(4))
-    fps = cap.get(cv2.CAP_PROP_FPS)
-    nframes = cap.get(cv2.CAP_PROP_FRAME_COUNT) if not cam else None
+def cam_read_iter(reader):
+    while True:
+        yield reader.get_next_data()
+
+def video_detect():  # Anonymize video using OpenCV
+    # TODO: BGR vs. RGB
+    reader: imageio.plugins.ffmpeg.FfmpegFormat.Reader = imageio.get_reader(ipath)
+    meta = reader.get_meta_data()
+    frame_width, frame_height = meta['size']
+    fps = meta['fps']
+    if cam:
+        nframes = None
+        read_iter = cam_read_iter(reader)
+    else:
+        read_iter = reader.iter_data()
+        nframes = reader.count_frames()
     bar = tqdm.tqdm(dynamic_ncols=True, total=nframes)
     if opath is not None:
-        out = cv2.VideoWriter(opath,cv2.VideoWriter_fourcc(*'X264'), fps, (frame_width,frame_height))
-    centerface = CenterFace(onnxpath)
+        writer: imageio.plugins.ffmpeg.FfmpegFormat.Writer = imageio.get_writer(
+            opath, format='FFMPEG', mode='I', fps=fps,
+            codec='libx264'
+            # codec='hevc_nvenc'
+            # codec='h264_nvenc'
+        )
 
-    detbuf = []
-
-    while True:
-        ret, frame = cap.read()
-        if not ret:
-            break
+    for frame in read_iter:
         # Perform network inference, get bb dets but discard landmark predictions
         dets, _ = centerface(frame, threshold=threshold)
-        detbuf.append(dets)
 
-        def maxfilter(detbuf):
-            return detbuf[-1]  # TODO
-
-        dets = maxfilter(detbuf)
         anonymize_frame(dets, frame)
 
         if opath is not None:
-            out.write(frame)
+            writer.append_data(frame)
 
         if show:
-            cv2.imshow('out', frame)
+            cv2.imshow('out', frame[:, :, ::-1])  # RGB -> RGB
             # Press Q on keyboard to stop recording
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
         bar.update()
-    cap.release()
-    out.release()
+    reader.close()
+    if opath is not None:
+        writer.close()
     bar.close()
 
 

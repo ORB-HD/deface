@@ -7,8 +7,8 @@ class CenterFace:
     def __init__(self, onnx_path='centerface.onnx', in_shape=None):
         self.net = cv2.dnn.readNetFromONNX('centerface.onnx')
         self.in_shape = in_shape
-        if self.in_shape is not None:
-            self.img_h_new, self.img_w_new, self.scale_h, self.scale_w = self.transform(self.in_shape)
+        # if self.in_shape is not None:
+            # self.img_h_new, self.img_w_new, self.scale_h, self.scale_w = self.transform(self.in_shape)
 
 
         # try:
@@ -26,16 +26,18 @@ class CenterFace:
 
 
     def __call__(self, img, threshold=0.5):
+        self.orig_shape = img.shape[:2]
         if self.in_shape is None:
-            self.in_shape = img.shape[:2]
-            self.img_h_new, self.img_w_new, self.scale_h, self.scale_w = self.transform(self.in_shape)
-        blob = cv2.dnn.blobFromImage(img, scalefactor=1.0, size=(self.img_w_new, self.img_h_new), mean=(0, 0, 0), swapRB=True, crop=False)
+            self.in_shape = orig_shape
+        if not hasattr(self, 'h_new'):
+            self.w_new, self.h_new, self.scale_w, self.scale_h = self.transform(self.in_shape)
+        blob = cv2.dnn.blobFromImage(img, scalefactor=1.0, size=(self.w_new, self.h_new), mean=(0, 0, 0), swapRB=False, crop=False)
         self.net.setInput(blob)
         # begin = datetime.datetime.now()
         heatmap, scale, offset, lms = self.net.forward(["537", "538", "539", '540'])
         # end = datetime.datetime.now()
         # print("cpu times = ", end - begin)
-        dets, lms = self.decode(heatmap, scale, offset, lms, (self.img_h_new, self.img_w_new), threshold=threshold)
+        dets, lms = self.decode(heatmap, scale, offset, lms, (self.h_new, self.w_new), threshold=threshold)
         if len(dets) > 0:
             dets[:, 0:4:2], dets[:, 1:4:2] = dets[:, 0:4:2] / self.scale_w, dets[:, 1:4:2] / self.scale_h
             lms[:, 0:10:2], lms[:, 1:10:2] = lms[:, 0:10:2] / self.scale_w, lms[:, 1:10:2] / self.scale_h
@@ -46,10 +48,11 @@ class CenterFace:
         return dets, lms
 
     def transform(self, in_shape):
-        h, w = in_shape
-        img_h_new, img_w_new = int(np.ceil(h / 32) * 32), int(np.ceil(w / 32) * 32)
-        scale_h, scale_w = img_h_new / h, img_w_new / w
-        return img_h_new, img_w_new, scale_h, scale_w
+        h_orig, w_orig = self.orig_shape
+        w_new, h_new = in_shape
+        w_new, h_new = int(np.ceil(w_new / 32) * 32), int(np.ceil(h_new / 32) * 32)
+        scale_w, scale_h = w_new / w_orig, h_new / h_orig
+        return w_new, h_new, scale_w, scale_h
 
     def decode(self, heatmap, scale, offset, landmark, size, threshold=0.1):
         heatmap = np.squeeze(heatmap)
