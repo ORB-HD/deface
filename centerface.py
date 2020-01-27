@@ -1,15 +1,25 @@
+import datetime
+
 import numpy as np
 import cv2
-import datetime
 
 
 class CenterFace:
-    def __init__(self, onnx_path='centerface.onnx', in_shape=None):
-        self.net = cv2.dnn.readNetFromONNX('centerface.onnx')
+    def __init__(self, onnx_path='centerface.onnx', in_shape=None, backend='onnxrt'):
+        self.backend = backend
         self.in_shape = in_shape
-        # if self.in_shape is not None:
-            # self.img_h_new, self.img_w_new, self.scale_h, self.scale_w = self.transform(self.in_shape)
+        self.onnx_input_name = 'input.1'
+        self.onnx_output_names = ['537', '538', '539', '540']
 
+        if backend == 'opencv':
+            self.net = cv2.dnn.readNetFromONNX('centerface.onnx')
+        elif backend == 'onnxrt':
+            import onnx
+            import onnxruntime
+
+            static_model = onnx.load(onnx_path)
+            dyn_model = self.dynamicize_shapes(static_model)
+            self.sess = onnxruntime.InferenceSession(dyn_model.SerializeToString())
 
         # try:
         #     import torch
@@ -24,19 +34,45 @@ class CenterFace:
         # _py_nms actually runs faster in local cpu benchmarks
         self.nms = self._py_nms
 
+    @staticmethod
+    def dynamicize_shapes(static_model):
+        from onnx.tools.update_model_dims import update_inputs_outputs_dims
+
+        input_dims, output_dims = {}, {}
+        for node in static_model.graph.input:
+            dims = [d.dim_value for d in node.type.tensor_type.shape.dim]
+            input_dims[node.name] = dims
+        for node in static_model.graph.output:
+            dims = [d.dim_value for d in node.type.tensor_type.shape.dim]
+            output_dims[node.name] = dims
+        input_dims.update({
+            'input.1': ['B', 3, 'H', 'W']  # RGB input image
+        })
+        output_dims.update({
+            '537': ['B', 1, 'h', 'w'],  # heatmap
+            '538': ['B', 2, 'h', 'w'],  # scale
+            '539': ['B', 2, 'h', 'w'],  # offset
+            '540': ['B', 10, 'h', 'w']  # landmarks
+        })
+        dyn_model = update_inputs_outputs_dims(static_model, input_dims, output_dims)
+        return dyn_model
 
     def __call__(self, img, threshold=0.5):
         self.orig_shape = img.shape[:2]
         if self.in_shape is None:
             self.in_shape = self.orig_shape
-        if not hasattr(self, 'h_new'):
+        if not hasattr(self, 'h_new'):  # First call, need to compute sizes
             self.w_new, self.h_new, self.scale_w, self.scale_h = self.transform(self.in_shape)
-        blob = cv2.dnn.blobFromImage(img, scalefactor=1.0, size=(self.w_new, self.h_new), mean=(0, 0, 0), swapRB=False, crop=False)
-        self.net.setInput(blob)
-        # begin = datetime.datetime.now()
-        heatmap, scale, offset, lms = self.net.forward(["537", "538", "539", '540'])
-        # end = datetime.datetime.now()
-        # print("cpu times = ", end - begin)
+
+        blob = cv2.dnn.blobFromImage(
+            img, scalefactor=1.0, size=(self.w_new, self.h_new),
+            mean=(0, 0, 0), swapRB=False, crop=False
+        )
+        if self.backend == 'opencv':
+            self.net.setInput(blob)
+            heatmap, scale, offset, lms = self.net.forward(self.onnx_output_names)
+        elif self.backend == 'onnxrt':
+            heatmap, scale, offset, lms = self.sess.run(self.onnx_output_names, {self.onnx_input_name: blob})
         dets, lms = self.decode(heatmap, scale, offset, lms, (self.h_new, self.w_new), threshold=threshold)
         if len(dets) > 0:
             dets[:, 0:4:2], dets[:, 1:4:2] = dets[:, 0:4:2] / self.scale_w, dets[:, 1:4:2] / self.scale_h
