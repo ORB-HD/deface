@@ -28,7 +28,7 @@ class CenterFace:
     def __call__(self, img, threshold=0.5):
         self.orig_shape = img.shape[:2]
         if self.in_shape is None:
-            self.in_shape = orig_shape
+            self.in_shape = self.orig_shape
         if not hasattr(self, 'h_new'):
             self.w_new, self.h_new, self.scale_w, self.scale_h = self.transform(self.in_shape)
         blob = cv2.dnn.blobFromImage(img, scalefactor=1.0, size=(self.w_new, self.h_new), mean=(0, 0, 0), swapRB=False, crop=False)
