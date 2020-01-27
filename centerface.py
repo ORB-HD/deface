@@ -15,10 +15,12 @@ class CenterFace:
             self.net = cv2.dnn.readNetFromONNX('centerface.onnx')
         elif backend == 'onnxrt':
             import onnx
+            import onnx.utils
             import onnxruntime
 
             static_model = onnx.load(onnx_path)
             dyn_model = self.dynamicize_shapes(static_model)
+            dyn_model = onnx.utils.polish_model(dyn_model)
             self.sess = onnxruntime.InferenceSession(dyn_model.SerializeToString())
 
         # try:
@@ -60,7 +62,7 @@ class CenterFace:
     def __call__(self, img, threshold=0.5):
         self.orig_shape = img.shape[:2]
         if self.in_shape is None:
-            self.in_shape = self.orig_shape
+            self.in_shape = self.orig_shape[::-1]
         if not hasattr(self, 'h_new'):  # First call, need to compute sizes
             self.w_new, self.h_new, self.scale_w, self.scale_h = self.transform(self.in_shape)
 
@@ -86,6 +88,7 @@ class CenterFace:
     def transform(self, in_shape):
         h_orig, w_orig = self.orig_shape
         w_new, h_new = in_shape
+        # Make spatial dims divisible by 32
         w_new, h_new = int(np.ceil(w_new / 32) * 32), int(np.ceil(h_new / 32) * 32)
         scale_w, scale_h = w_new / w_orig, h_new / h_orig
         return w_new, h_new, scale_w, scale_h
