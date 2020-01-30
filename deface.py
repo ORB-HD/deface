@@ -15,7 +15,7 @@ from centerface import CenterFace
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-i', default='<video0>', help='Input file name or camera index')
-parser.add_argument('-o', default=None, help='Output file name (defaults to input path + postfix "_anonymized").')
+parser.add_argument('-o', default=None, help='Output file name (defaults to input path + postfix "_anonymized")')
 parser.add_argument('-r', default='blur', choices=['solid', 'blur', 'none'], help='Anonymization filter mode for face regions')
 parser.add_argument('-d', default=None, help='Downsample images for network inference to this size')
 # parser.add_argument('-c', default='red', help='Color hue of the overlays (boxes, texts)')
@@ -23,9 +23,10 @@ parser.add_argument('-l', default=False, action='store_true', help='Enable landm
 parser.add_argument('-q', default=False, action='store_true', help='Disable GUI')
 parser.add_argument('-n', default='./centerface.onnx', help='Path to CenterFace ONNX model file')
 parser.add_argument('-e', default=False, action='store_true', help='Enable detection enumeration')
-parser.add_argument('-t', default=0.3, type=float, help='Detection threshold')
-parser.add_argument('-m', default=False, action='store_true', help='Use ellipse masks instead of boxes')
+parser.add_argument('-t', default=0.2, type=float, help='Detection threshold')
+parser.add_argument('-m', default=False, action='store_true', help='Use boxes instead of ellipse masks')
 parser.add_argument('-s', default=1.3, type=float, help='Scale factor for face masks (use high values to be on the safe side)')
+parser.add_argument('-b', default='onnxrt', choices=['onnxrt', 'opencv'], help='Backend for ONNX model execution')
 
 args = parser.parse_args()
 
@@ -39,8 +40,9 @@ show = not args.q
 onnxpath = args.n
 enumerate_dets = args.e
 threshold = args.t
-ellipse = args.m
+ellipse = not args.m
 mask_scale = args.s
+backend = args.b
 # ovcolor = colors.get(args.c, (0, 0, 0))
 in_shape = args.d
 if in_shape is not None:
@@ -57,7 +59,7 @@ if opath is None and not cam:
 
 ovcolor = (0, 0, 255)
 
-centerface = CenterFace(onnxpath, in_shape=in_shape)
+centerface = CenterFace(onnxpath, in_shape=in_shape, backend=backend)
 
 
 class Detection:
@@ -137,7 +139,6 @@ def video_detect():  # Anonymize video using OpenCV
     reader: imageio.plugins.ffmpeg.FfmpegFormat.Reader = imageio.get_reader(ipath)
     meta = reader.get_meta_data()
     frame_width, frame_height = meta['size']
-    fps = meta['fps']
     if cam:
         nframes = None
         read_iter = cam_read_iter(reader)
@@ -147,7 +148,7 @@ def video_detect():  # Anonymize video using OpenCV
     bar = tqdm.tqdm(dynamic_ncols=True, total=nframes)
     if opath is not None:
         writer: imageio.plugins.ffmpeg.FfmpegFormat.Writer = imageio.get_writer(
-            opath, format='FFMPEG', mode='I', fps=fps,
+            opath, format='FFMPEG', mode='I', fps=meta['fps'],
             codec='libx264'
             # codec='hevc_nvenc'
             # codec='h264_nvenc'
