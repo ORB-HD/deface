@@ -27,6 +27,7 @@ parser.add_argument('-t', default=0.2, type=float, help='Detection threshold')
 parser.add_argument('-m', default=False, action='store_true', help='Use boxes instead of ellipse masks')
 parser.add_argument('-s', default=1.3, type=float, help='Scale factor for face masks (use high values to be on the safe side)')
 parser.add_argument('-b', default='onnxrt', choices=['onnxrt', 'opencv'], help='Backend for ONNX model execution')
+parser.add_argument('--nested', default=False, action='store_true', help='Run in nested progress mode (for batch processes)')
 
 args = parser.parse_args()
 
@@ -145,7 +146,11 @@ def video_detect():  # Anonymize video using OpenCV
     else:
         read_iter = reader.iter_data()
         nframes = reader.count_frames()
-    bar = tqdm.tqdm(dynamic_ncols=True, total=nframes)
+    if args.nested:
+        bar = tqdm.tqdm(dynamic_ncols=True, total=nframes, position=1, leave=False)
+    else:
+        bar = tqdm.tqdm(dynamic_ncols=True, total=nframes)
+
     if opath is not None:
         writer: imageio.plugins.ffmpeg.FfmpegFormat.Writer = imageio.get_writer(
             opath, format='FFMPEG', mode='I', fps=meta['fps'],

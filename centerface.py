@@ -28,7 +28,7 @@ class CenterFace:
             
             preferred_provider = self.sess.get_providers()[0]
             preferred_device = 'GPU' if preferred_provider.startswith('CUDA') else 'CPU'
-            print(f'Running on {preferred_device}.')
+            # print(f'Running on {preferred_device}.')
 
     @staticmethod
     def dynamicize_shapes(static_model):
