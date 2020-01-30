@@ -18,10 +18,17 @@ class CenterFace:
             import onnx.utils
             import onnxruntime
 
+            # Silence warnings about unnecessary bn initializers
+            onnxruntime.set_default_logger_severity(3)
+
             static_model = onnx.load(onnx_path)
             dyn_model = self.dynamicize_shapes(static_model)
             dyn_model = onnx.utils.polish_model(dyn_model)
             self.sess = onnxruntime.InferenceSession(dyn_model.SerializeToString())
+            
+            preferred_provider = self.sess.get_providers()[0]
+            preferred_device = 'GPU' if preferred_provider.startswith('CUDA') else 'CPU'
+            print(f'Running on {preferred_device}.')
 
         # try:
         #     import torch
