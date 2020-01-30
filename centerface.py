@@ -30,19 +30,6 @@ class CenterFace:
             preferred_device = 'GPU' if preferred_provider.startswith('CUDA') else 'CPU'
             print(f'Running on {preferred_device}.')
 
-        # try:
-        #     import torch
-        #     import torchvision.ops
-        #     print('Using fast torchvision nms...')
-        #     self.nms = self._torch_nms
-        # except:
-        #     import traceback
-        #     traceback.print_exc()
-        #     print('Can\'t import torchvision nms. Using slow python nms...')
-        #     self.nms = self._py_nms
-        # _py_nms actually runs faster in local cpu benchmarks
-        self.nms = self._py_nms
-
     @staticmethod
     def dynamicize_shapes(static_model):
         from onnx.tools.update_model_dims import update_inputs_outputs_dims
@@ -126,19 +113,8 @@ class CenterFace:
             lms = lms[keep, :]
         return boxes, lms
 
-
     @staticmethod
-    def _torch_nms(boxes, scores, nms_thresh):
-        import torch
-        import torchvision.ops
-        boxes = torch.as_tensor(boxes)
-        scores = torch.as_tensor(scores)
-        keep = torchvision.ops.nms(boxes, scores, nms_thresh)
-        return keep.numpy()
-
-
-    @staticmethod
-    def _py_nms(boxes, scores, nms_thresh):
+    def nms(boxes, scores, nms_thresh):
         x1 = boxes[:, 0]
         y1 = boxes[:, 1]
         x2 = boxes[:, 2]
