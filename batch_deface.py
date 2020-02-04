@@ -13,7 +13,7 @@ parser.add_argument('--options', default=None, help='Additional options to be pa
 
 args = parser.parse_args()
 
-cmd_base = 'python3 deface.py -q --nested'
+cmd_base = f'{sys.executable} deface.py -q --nested'
 if args.options is not None:
     cmd_base = f'{cmd_base} {args.options}'
 # cmd_base = f'{cmd_base}'
