@@ -10,8 +10,7 @@ default_onnx_path = f'{os.path.dirname(__file__)}/centerface.onnx'
 
 
 class CenterFace:
-    def __init__(self, onnx_path=None, in_shape=None, backend='onnxrt'):
-        self.backend = backend
+    def __init__(self, onnx_path=None, in_shape=None, backend='auto'):
         self.in_shape = in_shape
         self.onnx_input_name = 'input.1'
         self.onnx_output_names = ['537', '538', '539', '540']
@@ -19,9 +18,20 @@ class CenterFace:
         if onnx_path is None:
             onnx_path = default_onnx_path
 
-        if backend == 'opencv':
+        if backend == 'auto':
+            try:
+                import onnx
+                import onnxruntime
+                backend = 'onnxrt'
+            except:
+                print('Failed to import onnx or onnxruntime. Falling back to slower OpenCV backend.')
+                backend = 'opencv'
+        self.backend = backend
+
+
+        if self.backend == 'opencv':
             self.net = cv2.dnn.readNetFromONNX(onnx_path)
-        elif backend == 'onnxrt':
+        elif self.backend == 'onnxrt':
             import onnx
             import onnx.utils
             import onnxruntime
@@ -77,6 +87,8 @@ class CenterFace:
             heatmap, scale, offset, lms = self.net.forward(self.onnx_output_names)
         elif self.backend == 'onnxrt':
             heatmap, scale, offset, lms = self.sess.run(self.onnx_output_names, {self.onnx_input_name: blob})
+        else:
+            raise RuntimeError(f'Unknown backend {self.backend}')
         dets, lms = self.decode(heatmap, scale, offset, lms, (self.h_new, self.w_new), threshold=threshold)
         if len(dets) > 0:
             dets[:, 0:4:2], dets[:, 1:4:2] = dets[:, 0:4:2] / self.scale_w, dets[:, 1:4:2] / self.scale_h

@@ -26,7 +26,7 @@ parser.add_argument('-e', default=False, action='store_true', help='Enable detec
 parser.add_argument('-t', default=0.2, type=float, help='Detection threshold')
 parser.add_argument('-m', default=False, action='store_true', help='Use boxes instead of ellipse masks')
 parser.add_argument('-s', default=1.3, type=float, help='Scale factor for face masks (use high values to be on the safe side)')
-parser.add_argument('-b', default='onnxrt', choices=['onnxrt', 'opencv'], help='Backend for ONNX model execution')
+parser.add_argument('-b', default='auto', choices=['auto', 'onnxrt', 'opencv'], help='Backend for ONNX model execution')
 parser.add_argument('--nested', default=False, action='store_true', help='Run in nested progress mode (for batch processes)')
 
 args = parser.parse_args()
