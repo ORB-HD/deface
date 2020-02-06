@@ -62,7 +62,7 @@ def draw_det(
 
 def anonymize_frame(
         dets, frame, mask_scale,
-        replacewith, ellipse, enumerate_dets, ovcolor
+        replacewith, ellipse, enumerate_dets
 ):
     for i, det in enumerate(dets):
         boxes, score = det[:4], det[4]
@@ -77,7 +77,6 @@ def anonymize_frame(
             replacewith=replacewith,
             ellipse=ellipse,
             enumerate_dets=enumerate_dets,
-            ovcolor=ovcolor
         )
 
 
@@ -86,23 +85,22 @@ def cam_read_iter(reader):
         yield reader.get_next_data()
 
 def video_detect(
-        ipath,
-        opath,
-        centerface,
-        threshold,
-        show,
-        cam,
-        nested,
-        replacewith,
-        mask_scale,
-        ellipse,
-        enumerate_dets,
-        ovcolor
+        ipath: str,
+        opath: str,
+        centerface: str,
+        threshold: float,
+        show: bool,
+        cam: bool,
+        nested: bool,
+        replacewith: str,
+        mask_scale: float,
+        ellipse: bool,
+        enumerate_dets: bool,
 ):
     try:
         reader: imageio.plugins.ffmpeg.FfmpegFormat.Reader = imageio.get_reader(ipath)
         meta = reader.get_meta_data()
-        frame_width, frame_height = meta['size']
+        _ = meta['size']
     except:
         print(f'Could not open file {ipath} as a video file with imageio. Skipping file...')
         return
@@ -132,7 +130,7 @@ def video_detect(
 
         anonymize_frame(
             dets, frame, mask_scale=mask_scale,
-            replacewith=replacewith, ellipse=ellipse, enumerate_dets=enumerate_dets, ovcolor=ovcolor
+            replacewith=replacewith, ellipse=ellipse, enumerate_dets=enumerate_dets
         )
 
         if opath is not None:
@@ -156,7 +154,6 @@ def main():
     parser.add_argument('-o', default=None, help='Output file name (defaults to input path + postfix "_anonymized")')
     parser.add_argument('-r', default='blur', choices=['solid', 'blur', 'none'], help='Anonymization filter mode for face regions')
     parser.add_argument('-d', default=None, help='Downsample images for network inference to this size')
-    # parser.add_argument('-c', default='red', help='Color hue of the overlays (boxes, texts)')
     parser.add_argument('-q', default=False, action='store_true', help='Disable GUI')
     parser.add_argument('-n', default=None, help='Path to CenterFace ONNX model file')
     parser.add_argument('-e', default=False, action='store_true', help='Enable detection enumeration')
@@ -179,7 +176,6 @@ def main():
     ellipse = not args.m
     mask_scale = args.s
     backend = args.b
-    # ovcolor = colors.get(args.c, (0, 0, 0))
     in_shape = args.d
     nested = args.nested
     extfilter = args.ext
@@ -192,8 +188,6 @@ def main():
     if opath is None and not cam:
         root, ext = os.path.splitext(ipath)
         opath = f'{root}_anonymized{ext}'
-
-    ovcolor = (0, 0, 0)
 
     centerface = CenterFace(onnxpath, in_shape=in_shape, backend=backend)
 
@@ -210,7 +204,6 @@ def main():
             mask_scale=mask_scale,
             ellipse=ellipse,
             enumerate_dets=enumerate_dets,
-            ovcolor=ovcolor
         )
     elif os.path.isdir(ipath):
         paths = glob.glob(f'{ipath}/**/*.{extfilter}', recursive=True)
@@ -229,7 +222,6 @@ def main():
                 mask_scale=mask_scale,
                 ellipse=ellipse,
                 enumerate_dets=enumerate_dets,
-                ovcolor=ovcolor,
                 show=False,
                 nested=True,
             )
