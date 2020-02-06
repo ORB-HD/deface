@@ -99,9 +99,14 @@ def video_detect(
         enumerate_dets,
         ovcolor
 ):
-    reader: imageio.plugins.ffmpeg.FfmpegFormat.Reader = imageio.get_reader(ipath)
-    meta = reader.get_meta_data()
-    frame_width, frame_height = meta['size']
+    try:
+        reader: imageio.plugins.ffmpeg.FfmpegFormat.Reader = imageio.get_reader(ipath)
+        meta = reader.get_meta_data()
+        frame_width, frame_height = meta['size']
+    except:
+        print(f'Could not open file {ipath} as a video file with imageio. Skipping file...')
+        return
+    
     if cam:
         nframes = None
         read_iter = cam_read_iter(reader)
