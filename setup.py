@@ -18,6 +18,17 @@ setuptools.setup(
     ]},
     package_data={'deface': ['centerface.onnx']},
     include_package_data=True,
+    install_requires=[
+        'imageio',
+        'imageio-ffmpeg',
+        'numpy',
+        'tqdm',
+        'scikit-image',
+        'opencv-python',
+    ],
+    extras_require={
+        'gpu':  ['onnxruntime-gpu'],
+    },
     classifiers=[
         'Programming Language :: Python :: 3',
         'License :: OSI Approved :: MIT License',
