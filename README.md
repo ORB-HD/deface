@@ -4,6 +4,10 @@ Deface: Video anonymization by face detection
 Installation
 ------------
 
+Current git master:
+
+    $ pip install 'git+https://gitlab.com/mdraw/deface'
+
 Usage
 -----
 
@@ -15,17 +19,6 @@ Without installation:
 
     $ python3 -m deface.deface -i <input.mp4> -o <output.mp4>
 
-
-Dependencies
-------------
-
-Via pip:
-
-    $ pip install imageio imageio-ffmpeg numpy tqdm scikit-image opencv-python
-
-Or if you prefer conda:
-
-    $ conda install -c conda-forge imageio imageio-ffmpeg numpy tqdm scikit-image py-opencv
 
 GPU acceleration
 ----------------
