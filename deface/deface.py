@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import argparse
+import glob
 import os
 from typing import Tuple
 
@@ -146,7 +147,7 @@ def video_detect(
 
 def main():
     parser = argparse.ArgumentParser(description='Video anonymization by face detection')
-    parser.add_argument('-i', default='<video0>', help='Input file name or camera index')
+    parser.add_argument('-i', default='<video0>', help='Input file name, directory name (for batch processing) or camera index')
     parser.add_argument('-o', default=None, help='Output file name (defaults to input path + postfix "_anonymized")')
     parser.add_argument('-r', default='blur', choices=['solid', 'blur', 'none'], help='Anonymization filter mode for face regions')
     parser.add_argument('-d', default=None, help='Downsample images for network inference to this size')
@@ -158,6 +159,7 @@ def main():
     parser.add_argument('-m', default=False, action='store_true', help='Use boxes instead of ellipse masks')
     parser.add_argument('-s', default=1.3, type=float, help='Scale factor for face masks (use high values to be on the safe side)')
     parser.add_argument('-b', default='auto', choices=['auto', 'onnxrt', 'opencv'], help='Backend for ONNX model execution')
+    parser.add_argument('--ext', default='*', help='Filter by file extension (no filter (*) by default). Only applies if the -i argument is a directory.')
     parser.add_argument('--nested', default=False, action='store_true', help='Run in nested progress mode (for batch processes)')
 
     args = parser.parse_args()
@@ -175,12 +177,11 @@ def main():
     # ovcolor = colors.get(args.c, (0, 0, 0))
     in_shape = args.d
     nested = args.nested
+    extfilter = args.ext
     if in_shape is not None:
         w, h = in_shape.split('x')
         in_shape = int(w), int(h)
 
-
-    # cam = isinstance(ipath, int)
     cam = ipath.startswith('<video')
 
     if opath is None and not cam:
@@ -191,20 +192,42 @@ def main():
 
     centerface = CenterFace(onnxpath, in_shape=in_shape, backend=backend)
 
-    video_detect(
-        ipath=ipath,
-        opath=opath,
-        centerface=centerface,
-        threshold=threshold,
-        show=show,
-        cam=cam,
-        nested=nested,
-        replacewith=replacewith,
-        mask_scale=mask_scale,
-        ellipse=ellipse,
-        enumerate_dets=enumerate_dets,
-        ovcolor=ovcolor
-    )
+    if os.path.isfile(ipath) or cam:
+        video_detect(
+            ipath=ipath,
+            opath=opath,
+            centerface=centerface,
+            threshold=threshold,
+            show=show,
+            cam=cam,
+            nested=nested,
+            replacewith=replacewith,
+            mask_scale=mask_scale,
+            ellipse=ellipse,
+            enumerate_dets=enumerate_dets,
+            ovcolor=ovcolor
+        )
+    elif os.path.isdir(ipath):
+        paths = glob.glob(f'{ipath}/**/*.{extfilter}', recursive=True)
+        pbar = tqdm.tqdm(paths, position=0)
+        for p in pbar:
+            pbar.set_description(f'Current video: {p}')
+            video_detect(
+                ipath=p,
+                centerface=centerface,
+                threshold=threshold,
+                cam=cam,
+                replacewith=replacewith,
+                mask_scale=mask_scale,
+                ellipse=ellipse,
+                enumerate_dets=enumerate_dets,
+                ovcolor=ovcolor,
+                opath=None,  # ipath + '_anonymized'
+                show=False,
+                nested=True,
+            )
+    else:
+        raise FileNotFoundError(f'{ipath} not found.')
 
 
 if __name__ == '__main__':
