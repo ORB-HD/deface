@@ -1,18 +1,26 @@
 import datetime
+import os
 
 import numpy as np
 import cv2
 
 
+# Find file relative to the location of this code files
+default_onnx_path = f'{os.path.dirname(__file__)}/centerface.onnx'
+
+
 class CenterFace:
-    def __init__(self, onnx_path='centerface.onnx', in_shape=None, backend='onnxrt'):
+    def __init__(self, onnx_path=None, in_shape=None, backend='onnxrt'):
         self.backend = backend
         self.in_shape = in_shape
         self.onnx_input_name = 'input.1'
         self.onnx_output_names = ['537', '538', '539', '540']
 
+        if onnx_path is None:
+            onnx_path = default_onnx_path
+
         if backend == 'opencv':
-            self.net = cv2.dnn.readNetFromONNX('centerface.onnx')
+            self.net = cv2.dnn.readNetFromONNX(onnx_path)
         elif backend == 'onnxrt':
             import onnx
             import onnx.utils

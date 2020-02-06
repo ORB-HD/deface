@@ -10,7 +10,7 @@ import imageio
 import imageio.plugins.ffmpeg
 import cv2
 
-from centerface import CenterFace
+from deface.centerface import CenterFace
 
 
 parser = argparse.ArgumentParser()
@@ -21,7 +21,7 @@ parser.add_argument('-d', default=None, help='Downsample images for network infe
 # parser.add_argument('-c', default='red', help='Color hue of the overlays (boxes, texts)')
 parser.add_argument('-l', default=False, action='store_true', help='Enable landmark visualization')
 parser.add_argument('-q', default=False, action='store_true', help='Disable GUI')
-parser.add_argument('-n', default='./centerface.onnx', help='Path to CenterFace ONNX model file')
+parser.add_argument('-n', default=None, help='Path to CenterFace ONNX model file')
 parser.add_argument('-e', default=False, action='store_true', help='Enable detection enumeration')
 parser.add_argument('-t', default=0.2, type=float, help='Detection threshold')
 parser.add_argument('-m', default=False, action='store_true', help='Use boxes instead of ellipse masks')
@@ -180,5 +180,9 @@ def video_detect():  # Anonymize video using OpenCV
     bar.close()
 
 
-if __name__ == '__main__':
+def main():
     video_detect()
+
+
+if __name__ == '__main__':
+    main()
