@@ -106,7 +106,7 @@ def video_detect(
     except:
         print(f'Could not open file {ipath} as a video file with imageio. Skipping file...')
         return
-    
+
     if cam:
         nframes = None
         read_iter = cam_read_iter(reader)
@@ -217,8 +217,11 @@ def main():
         pbar = tqdm.tqdm(paths, position=0)
         for p in pbar:
             pbar.set_description(f'Current video: {p}')
+            root, ext = os.path.splitext(p)
+            opath = f'{root}_anonymized{ext}'
             video_detect(
                 ipath=p,
+                opath=opath,
                 centerface=centerface,
                 threshold=threshold,
                 cam=cam,
@@ -227,7 +230,6 @@ def main():
                 ellipse=ellipse,
                 enumerate_dets=enumerate_dets,
                 ovcolor=ovcolor,
-                opath=None,  # ipath + '_anonymized'
                 show=False,
                 nested=True,
             )
