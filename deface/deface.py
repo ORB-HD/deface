@@ -150,19 +150,17 @@ def video_detect(
 
 def main():
     parser = argparse.ArgumentParser(description='Video anonymization by face detection')
-    parser.add_argument('-i', default='<video0>', help='Input file name, directory name (for batch processing) or camera index')
-    parser.add_argument('-o', default=None, help='Output file name (defaults to input path + postfix "_anonymized")')
-    parser.add_argument('-r', default='blur', choices=['solid', 'blur', 'none'], help='Anonymization filter mode for face regions')
-    parser.add_argument('-d', default=None, help='Downsample images for network inference to this size')
-    parser.add_argument('-q', default=False, action='store_true', help='Disable GUI')
-    parser.add_argument('-n', default=None, help='Path to CenterFace ONNX model file')
-    parser.add_argument('-e', default=False, action='store_true', help='Enable detection enumeration')
-    parser.add_argument('-t', default=0.2, type=float, help='Detection threshold')
-    parser.add_argument('-m', default=False, action='store_true', help='Use boxes instead of ellipse masks')
-    parser.add_argument('-s', default=1.3, type=float, help='Scale factor for face masks (use high values to be on the safe side)')
-    parser.add_argument('-b', default='auto', choices=['auto', 'onnxrt', 'opencv'], help='Backend for ONNX model execution')
+    parser.add_argument('-i', default='<video0>', help='Input file name, directory name (for batch processing) or camera device name (default: <video0>).')
+    parser.add_argument('-o', default=None, help='Output file name (defaults to input path + postfix "_anonymized").')
+    parser.add_argument('-r', default='blur', choices=['solid', 'blur', 'none'], help='Anonymization filter mode for face regions.')
+    parser.add_argument('-d', default=None, help='Downsample images for network inference to this size.')
+    parser.add_argument('-q', default=False, action='store_true', help='Disable preview GUI.')
+    parser.add_argument('-e', default=False, action='store_true', help='Enable detection enumeration.')
+    parser.add_argument('-t', default=0.2, type=float, help='Detection threshold (tune this to trade off between false positive and false negative rate).')
+    parser.add_argument('-m', default=False, action='store_true', help='Use boxes instead of ellipse masks.')
+    parser.add_argument('-s', default=1.3, type=float, help='Scale factor for face masks, to make sure that masks cover the complete face (default: 1.3).)')
+    parser.add_argument('-b', default='auto', choices=['auto', 'onnxrt', 'opencv'], help='Backend for ONNX model execution.')
     parser.add_argument('--ext', default='*', help='Filter by file extension (no filter (*) by default). Only applies if the -i argument is a directory.')
-    parser.add_argument('--nested', default=False, action='store_true', help='Run in nested progress mode (for batch processes)')
 
     args = parser.parse_args()
 
@@ -170,14 +168,12 @@ def main():
     opath = args.o
     replacewith = args.r
     show = not args.q
-    onnxpath = args.n
     enumerate_dets = args.e
     threshold = args.t
     ellipse = not args.m
     mask_scale = args.s
     backend = args.b
     in_shape = args.d
-    nested = args.nested
     extfilter = args.ext
     if in_shape is not None:
         w, h = in_shape.split('x')
@@ -189,7 +185,7 @@ def main():
         root, ext = os.path.splitext(ipath)
         opath = f'{root}_anonymized{ext}'
 
-    centerface = CenterFace(onnxpath, in_shape=in_shape, backend=backend)
+    centerface = CenterFace(in_shape=in_shape, backend=backend)
 
     if os.path.isfile(ipath) or cam:
         video_detect(
@@ -199,11 +195,11 @@ def main():
             threshold=threshold,
             show=show,
             cam=cam,
-            nested=nested,
             replacewith=replacewith,
             mask_scale=mask_scale,
             ellipse=ellipse,
             enumerate_dets=enumerate_dets,
+            nested=False,
         )
     elif os.path.isdir(ipath):
         paths = glob.glob(f'{ipath}/**/*.{extfilter}', recursive=True)
