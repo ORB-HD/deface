@@ -2,6 +2,7 @@
 
 import argparse
 import glob
+import mimetypes
 import os
 from typing import Tuple
 
@@ -137,8 +138,8 @@ def video_detect(
             writer.append_data(frame)
 
         if show:
-            cv2.imshow('out', frame[:, :, ::-1])  # RGB -> RGB
-            # Press Q on keyboard to stop recording
+            cv2.imshow('Anonymized', frame[:, :, ::-1])  # RGB -> RGB
+            # Press Q on keyboard to stop
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
         bar.update()
@@ -148,13 +149,37 @@ def video_detect(
     bar.close()
 
 
+def image_detect(
+        ipath: str,
+        opath: str,
+        centerface: str,
+        threshold: float,
+        replacewith: str,
+        mask_scale: float,
+        ellipse: bool,
+        enumerate_dets: bool,
+):
+    frame = imageio.imread(ipath)
+
+    # Perform network inference, get bb dets but discard landmark predictions
+    dets, _ = centerface(frame, threshold=threshold)
+
+    anonymize_frame(
+        dets, frame, mask_scale=mask_scale,
+        replacewith=replacewith, ellipse=ellipse, enumerate_dets=enumerate_dets
+    )
+
+    imageio.imsave(opath, frame)
+    # print(f'Output saved to {opath}')
+
+
 def main():
     parser = argparse.ArgumentParser(description='Video anonymization by face detection')
     parser.add_argument('-i', default='<video0>', help='Input file name, directory name (for batch processing) or camera device name (default: <video0>).')
     parser.add_argument('-o', default=None, help='Output file name (defaults to input path + postfix "_anonymized").')
     parser.add_argument('-r', default='blur', choices=['solid', 'blur', 'none'], help='Anonymization filter mode for face regions.')
     parser.add_argument('-d', default=None, help='Downsample images for network inference to this size.')
-    parser.add_argument('-q', default=False, action='store_true', help='Disable preview GUI.')
+    parser.add_argument('-q', default=False, action='store_true', help='Disable preview GUI. Only applies if the -i argument is a single video file.')
     parser.add_argument('-e', default=False, action='store_true', help='Enable detection enumeration.')
     parser.add_argument('-t', default=0.2, type=float, help='Detection threshold (tune this to trade off between false positive and false negative rate).')
     parser.add_argument('-m', default=False, action='store_true', help='Use boxes instead of ellipse masks.')
@@ -185,42 +210,73 @@ def main():
         root, ext = os.path.splitext(ipath)
         opath = f'{root}_anonymized{ext}'
 
+    # TODO: scalar downscaling setting (-> in_shape), preserving aspect ratio
     centerface = CenterFace(in_shape=in_shape, backend=backend)
 
     if os.path.isfile(ipath) or cam:
-        video_detect(
-            ipath=ipath,
-            opath=opath,
-            centerface=centerface,
-            threshold=threshold,
-            show=show,
-            cam=cam,
-            replacewith=replacewith,
-            mask_scale=mask_scale,
-            ellipse=ellipse,
-            enumerate_dets=enumerate_dets,
-            nested=False,
-        )
-    elif os.path.isdir(ipath):
-        paths = glob.glob(f'{ipath}/**/*.{extfilter}', recursive=True)
-        pbar = tqdm.tqdm(paths, position=0)
-        for p in pbar:
-            pbar.set_description(f'Current video: {p}')
-            root, ext = os.path.splitext(p)
-            opath = f'{root}_anonymized{ext}'
+        mime = mimetypes.guess_type(ipath)[0]
+        if cam or mime.startswith('video'):
             video_detect(
-                ipath=p,
+                ipath=ipath,
                 opath=opath,
                 centerface=centerface,
                 threshold=threshold,
+                show=show,
                 cam=cam,
                 replacewith=replacewith,
                 mask_scale=mask_scale,
                 ellipse=ellipse,
                 enumerate_dets=enumerate_dets,
-                show=False,
-                nested=True,
+                nested=False,
             )
+        elif mime.startswith('image'):
+            image_detect(
+                ipath=ipath,
+                opath=opath,
+                centerface=centerface,
+                threshold=threshold,
+                replacewith=replacewith,
+                mask_scale=mask_scale,
+                ellipse=ellipse,
+                enumerate_dets=enumerate_dets,
+            )
+        else:
+            raise ValueError(f'File {ipath} has an unknown MIME type {mime}.')
+    elif os.path.isdir(ipath):
+        paths = glob.glob(f'{ipath}/**/*.{extfilter}', recursive=True)
+        pbar = tqdm.tqdm(paths, position=0)
+        for p in pbar:
+            root, ext = os.path.splitext(p)
+            opath = f'{root}_anonymized{ext}'
+            mime = mimetypes.guess_type(p)[0]
+            if mime.startswith('video'):
+                pbar.set_description(f'Current video: {p}')
+                video_detect(
+                    ipath=p,
+                    opath=opath,
+                    centerface=centerface,
+                    threshold=threshold,
+                    cam=cam,
+                    replacewith=replacewith,
+                    mask_scale=mask_scale,
+                    ellipse=ellipse,
+                    enumerate_dets=enumerate_dets,
+                    show=False,
+                    nested=True,
+                )
+            elif mime.startswith('image'):
+                image_detect(
+                    ipath=p,
+                    opath=opath,
+                    centerface=centerface,
+                    threshold=threshold,
+                    replacewith=replacewith,
+                    mask_scale=mask_scale,
+                    ellipse=ellipse,
+                    enumerate_dets=enumerate_dets,
+                )
+            else:
+                print(f'File {p} has an unknown MIME type {mime}. Skipping...')
     else:
         raise FileNotFoundError(f'{ipath} not found.')
 
