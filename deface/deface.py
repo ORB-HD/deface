@@ -175,7 +175,7 @@ def image_detect(
 
 def main():
     parser = argparse.ArgumentParser(description='Video anonymization by face detection')
-    parser.add_argument('-i', default='<video0>', help='Input file name, directory name (for batch processing) or camera device name (default: <video0>).')
+    parser.add_argument('input', default='<video0>', nargs='?', help='Input file name, directory name (for batch processing) or camera device name (default: <video0>).')
     parser.add_argument('-o', default=None, help='Output file name (defaults to input path + postfix "_anonymized").')
     parser.add_argument('-r', default='blur', choices=['solid', 'blur', 'none'], help='Anonymization filter mode for face regions.')
     parser.add_argument('-d', default=None, help='Downsample images for network inference to this size.')
@@ -189,7 +189,7 @@ def main():
 
     args = parser.parse_args()
 
-    ipath = args.i
+    ipath = args.input
     opath = args.o
     replacewith = args.r
     show = not args.q
