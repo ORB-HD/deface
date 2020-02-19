@@ -13,6 +13,7 @@ import imageio
 import imageio.plugins.ffmpeg
 import cv2
 
+from deface import __version__
 from deface.centerface import CenterFace
 
 
@@ -177,40 +178,44 @@ def image_detect(
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Video anonymization by face detection')
+    parser = argparse.ArgumentParser(description='Video anonymization by face detection', add_help=False)
     parser.add_argument(
         'input', default='<video0>', nargs='?',
         help='Input file name, directory name (for batch processing) or camera device name (default: <video0>, which is the first camera device).')
     parser.add_argument(
-        '-o', '--output', default=None,
+        '--output', '-o', default=None, metavar='O',
         help='Output file name (defaults to input path + postfix "_anonymized").')
     parser.add_argument(
-        '-t', '--thresh', default=0.2, type=float,
+        '--thresh', '-t', default=0.2, type=float, metavar='T',
         help='Detection threshold (tune this to trade off between false positive and false negative rate).')
     parser.add_argument(
-        '-r', '--replacewith', default='blur', choices=['solid', 'blur', 'none'],
-        help='Anonymization filter mode for face regions.')
-    parser.add_argument(
-        '-d', '--scale', default=None,
+        '--scale', '-s', default=None, metavar='WxH',
         help='Downscale images for network inference to this size (format: WxH, example: --scale=640x360).')
     parser.add_argument(
-        '-q', '--disable-gui', default=False, action='store_true',
+        '--disable-gui', '-q', default=False, action='store_true',
         help='Disable preview GUI. Only applies if the input is a single video file (else it\'s already off by default).')
     parser.add_argument(
-        '-e', '--enable-enum', default=False, action='store_true',
+        '--enable-enum', '-e', default=False, action='store_true',
         help='Draw detection numbers and scores into the output (useful for debugging).')
     parser.add_argument(
-        '-m', '--enable-boxes', default=False, action='store_true',
+        '--enable-boxes', default=False, action='store_true',
         help='Use boxes instead of ellipse masks.')
     parser.add_argument(
-        '-s', '--mask-scale', default=1.3, type=float,
+        '--mask-scale', default=1.3, type=float, metavar='M',
         help='Scale factor for face masks, to make sure that masks cover the complete face (default: 1.3).)')
     parser.add_argument(
-        '-b', '--backend', default='auto', choices=['auto', 'onnxrt', 'opencv'],
+        '--replacewith', default='blur', choices=['solid', 'blur', 'none'],
+        help='Anonymization filter mode for face regions.')
+    parser.add_argument(
+        '--backend', default='auto', choices=['auto', 'onnxrt', 'opencv'],
         help='Backend for ONNX model execution.')
     parser.add_argument(
-        '-f', '--ext', default='*',
+        '--ext', default='*',
         help='Filter by file extension (no filter (*) by default). Only applies if the input argument is a directory.')
+    parser.add_argument(
+        '--version', action='version', version=__version__,
+        help='Print version number and exit.')
+    parser.add_argument('--help', '-h', action='help', help='Show this help message and exit.')
 
     args = parser.parse_args()
 
