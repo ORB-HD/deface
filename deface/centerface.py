@@ -24,7 +24,8 @@ class CenterFace:
                 import onnxruntime
                 backend = 'onnxrt'
             except:
-                print('Failed to import onnx or onnxruntime. Falling back to slower OpenCV backend.')
+                # TODO: Warn when using a --verbose flag
+                # print('Failed to import onnx or onnxruntime. Falling back to slower OpenCV backend.')
                 backend = 'opencv'
         self.backend = backend
 

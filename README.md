@@ -14,7 +14,7 @@ Current git master:
 
 Basic usage after installing the `deface` package:
 
-    $ deface -i <input.mp4> -o <output.mp4>
+    $ deface <input.mp4> -o <output.mp4>
 
 Show help and all options:
 

@@ -125,8 +125,7 @@ def video_detect(
         writer: imageio.plugins.ffmpeg.FfmpegFormat.Writer = imageio.get_writer(
             opath, format='FFMPEG', mode='I', fps=meta['fps'],
             codec='libx264'
-            # codec='hevc_nvenc'
-            # codec='h264_nvenc'
+            # codec='libx265'
         )
 
     for frame in read_iter:
@@ -181,7 +180,7 @@ def main():
     parser = argparse.ArgumentParser(description='Video anonymization by face detection', add_help=False)
     parser.add_argument(
         'input', default='<video0>', nargs='?',
-        help='Input file name, directory name (for batch processing) or camera device name (default: <video0>, which is the first camera device).')
+        help='Video/image/directory path or camera device name (default: <video0>, which is the first camera device).')
     parser.add_argument(
         '--output', '-o', default=None, metavar='O',
         help='Output file name (defaults to input path + postfix "_anonymized").')
@@ -196,7 +195,7 @@ def main():
         help='Disable preview GUI. Only applies if the input is a single video file (else it\'s already off by default).')
     parser.add_argument(
         '--enable-enum', '-e', default=False, action='store_true',
-        help='Draw detection numbers and scores into the output (useful for debugging).')
+        help='Draw detection numbers and scores into the output.')
     parser.add_argument(
         '--enable-boxes', default=False, action='store_true',
         help='Use boxes instead of ellipse masks.')
