@@ -103,7 +103,10 @@ def video_detect(
         meta = reader.get_meta_data()
         _ = meta['size']
     except:
-        print(f'Could not open file {ipath} as a video file with imageio. Skipping file...')
+        if cam:
+            print(f'Could not find video device {ipath}. Please set a valid input.')
+        else:
+            print(f'Could not open file {ipath} as a video file with imageio. Skipping file...')
         return
 
     if cam:
@@ -175,30 +178,52 @@ def image_detect(
 
 def main():
     parser = argparse.ArgumentParser(description='Video anonymization by face detection')
-    parser.add_argument('input', default='<video0>', nargs='?', help='Input file name, directory name (for batch processing) or camera device name (default: <video0>).')
-    parser.add_argument('-o', default=None, help='Output file name (defaults to input path + postfix "_anonymized").')
-    parser.add_argument('-r', default='blur', choices=['solid', 'blur', 'none'], help='Anonymization filter mode for face regions.')
-    parser.add_argument('-d', default=None, help='Downsample images for network inference to this size.')
-    parser.add_argument('-q', default=False, action='store_true', help='Disable preview GUI. Only applies if the -i argument is a single video file.')
-    parser.add_argument('-e', default=False, action='store_true', help='Enable detection enumeration.')
-    parser.add_argument('-t', default=0.2, type=float, help='Detection threshold (tune this to trade off between false positive and false negative rate).')
-    parser.add_argument('-m', default=False, action='store_true', help='Use boxes instead of ellipse masks.')
-    parser.add_argument('-s', default=1.3, type=float, help='Scale factor for face masks, to make sure that masks cover the complete face (default: 1.3).)')
-    parser.add_argument('-b', default='auto', choices=['auto', 'onnxrt', 'opencv'], help='Backend for ONNX model execution.')
-    parser.add_argument('--ext', default='*', help='Filter by file extension (no filter (*) by default). Only applies if the -i argument is a directory.')
+    parser.add_argument(
+        'input', default='<video0>', nargs='?',
+        help='Input file name, directory name (for batch processing) or camera device name (default: <video0>, which is the first camera device).')
+    parser.add_argument(
+        '-o', '--output', default=None,
+        help='Output file name (defaults to input path + postfix "_anonymized").')
+    parser.add_argument(
+        '-t', '--thresh', default=0.2, type=float,
+        help='Detection threshold (tune this to trade off between false positive and false negative rate).')
+    parser.add_argument(
+        '-r', '--replacewith', default='blur', choices=['solid', 'blur', 'none'],
+        help='Anonymization filter mode for face regions.')
+    parser.add_argument(
+        '-d', '--scale', default=None,
+        help='Downscale images for network inference to this size (format: WxH, example: --scale=640x360).')
+    parser.add_argument(
+        '-q', '--disable-gui', default=False, action='store_true',
+        help='Disable preview GUI. Only applies if the input is a single video file (else it\'s already off by default).')
+    parser.add_argument(
+        '-e', '--enable-enum', default=False, action='store_true',
+        help='Draw detection numbers and scores into the output (useful for debugging).')
+    parser.add_argument(
+        '-m', '--enable-boxes', default=False, action='store_true',
+        help='Use boxes instead of ellipse masks.')
+    parser.add_argument(
+        '-s', '--mask-scale', default=1.3, type=float,
+        help='Scale factor for face masks, to make sure that masks cover the complete face (default: 1.3).)')
+    parser.add_argument(
+        '-b', '--backend', default='auto', choices=['auto', 'onnxrt', 'opencv'],
+        help='Backend for ONNX model execution.')
+    parser.add_argument(
+        '-f', '--ext', default='*',
+        help='Filter by file extension (no filter (*) by default). Only applies if the input argument is a directory.')
 
     args = parser.parse_args()
 
     ipath = args.input
-    opath = args.o
-    replacewith = args.r
-    show = not args.q
-    enumerate_dets = args.e
-    threshold = args.t
-    ellipse = not args.m
-    mask_scale = args.s
-    backend = args.b
-    in_shape = args.d
+    opath = args.output
+    replacewith = args.replacewith
+    show = not args.disable_gui
+    enumerate_dets = args.enable_enum
+    threshold = args.thresh
+    ellipse = not args.enable_boxes
+    mask_scale = args.mask_scale
+    backend = args.backend
+    in_shape = args.scale
     extfilter = args.ext
     if in_shape is not None:
         w, h = in_shape.split('x')
