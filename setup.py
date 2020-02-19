@@ -1,11 +1,13 @@
 import setuptools
+import versioneer
 
 with open('README.md', 'r') as fh:
     long_description = fh.read()
 
 setuptools.setup(
     name='deface',
-    version='0.3.0',
+    version=versioneer.get_version(),
+    cmdclass=versioneer.get_cmdclass(),
     author='Martin Drawitsch',
     author_email='martin.drawitsch@gmail.com',
     description='Video anonymization by face detection',

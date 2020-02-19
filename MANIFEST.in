@@ -1,0 +1,2 @@
+include versioneer.py
+include deface/_version.py
