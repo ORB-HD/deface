@@ -8,7 +8,7 @@ From PyPI (official releases):
 
 Current git master:
 
-    $ pip install 'git+https://github.com/mdraw/deface'
+    $ pip install 'git+https://github.com/ORB-HD/deface'
 
 ## Usage
 

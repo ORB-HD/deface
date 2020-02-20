@@ -13,7 +13,7 @@ setuptools.setup(
     description='Video anonymization by face detection',
     long_description=long_description,
     long_description_content_type='text/markdown',
-    url='https://github.com/mdraw/deface',
+    url='https://github.com/ORB-HD/deface',
     packages=setuptools.find_packages(),
     entry_points={'console_scripts': [
         'deface = deface.deface:main',
