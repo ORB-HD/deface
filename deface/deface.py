@@ -179,8 +179,8 @@ def image_detect(
 def main():
     parser = argparse.ArgumentParser(description='Video anonymization by face detection', add_help=False)
     parser.add_argument(
-        'input', default='<video0>', nargs='?',
-        help='Video/image/directory path or camera device name (default: <video0>, which is the first camera device).')
+        'input', nargs='?',
+        help='Video/image/directory path or camera device name (the camera device is usually accessible as \'<video0>\').')
     parser.add_argument(
         '--output', '-o', default=None, metavar='O',
         help='Output file name (defaults to input path + postfix "_anonymized").')
@@ -217,6 +217,11 @@ def main():
     parser.add_argument('--help', '-h', action='help', help='Show this help message and exit.')
 
     args = parser.parse_args()
+
+    if args.input is None:
+        parser.print_help()
+        print('\nPlease supply an input path.')
+        exit(1)
 
     ipath = args.input
     opath = args.output

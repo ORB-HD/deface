@@ -53,8 +53,8 @@ usage: deface [--output O] [--thresh T] [--scale WxH] [--disable-gui]
 Video anonymization by face detection
 
 positional arguments:
-  input                 Video/image/directory path or camera device name
-                        (default: <video0>, which is the first camera device).
+  input                 Video/image/directory path or camera device name (the
+                        camera device is usually accessible as '<video0>').
 
 optional arguments:
   --output O, -o O      Output file name (defaults to input path + postfix
