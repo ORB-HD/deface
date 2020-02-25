@@ -22,7 +22,7 @@ setuptools.setup(
     include_package_data=True,
     install_requires=[
         'imageio',
-        'imageio-ffmpeg<0.4.0',
+        'imageio-ffmpeg',
         'numpy',
         'tqdm',
         'scikit-image',

@@ -1,5 +1,5 @@
 imageio
-imageio-ffmpeg<0.4.0
+imageio-ffmpeg
 numpy
 tqdm
 scikit-image
