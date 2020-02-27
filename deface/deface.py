@@ -4,6 +4,7 @@ import argparse
 import glob
 import mimetypes
 import os
+import sys
 from typing import Tuple
 
 import tqdm
@@ -176,11 +177,26 @@ def image_detect(
     # print(f'Output saved to {opath}')
 
 
-def main():
+def get_file_type(path):
+    if path.startswith('<video'):
+        return 'cam'
+    if not os.path.isfile(path):
+        return 'notfound'
+    mime = mimetypes.guess_type(path)[0]
+    if mime is None:
+        return None
+    if mime.startswith('video'):
+        return 'video'
+    if mime.startswith('image'):
+        return 'image'
+    return mime
+
+
+def parse_cli_args():
     parser = argparse.ArgumentParser(description='Video anonymization by face detection', add_help=False)
     parser.add_argument(
-        'input', nargs='?',
-        help='Video/image/directory path or camera device name (the camera device is usually accessible as \'<video0>\').')
+        'input', nargs='*',
+        help=f'File path(s) or camera device name. It is possible to pass multiple paths by separating them by spaces or by using shell expansion (e.g. vids/*.mp4). Webcams are usually accessible as \'<video0>\'.')
     parser.add_argument(
         '--output', '-o', default=None, metavar='O',
         help='Output file name (defaults to input path + postfix "_anonymized").')
@@ -209,21 +225,24 @@ def main():
         '--backend', default='auto', choices=['auto', 'onnxrt', 'opencv'],
         help='Backend for ONNX model execution.')
     parser.add_argument(
-        '--ext', default='*',
-        help='Filter by file extension (no filter (*) by default). Only applies if the input argument is a directory.')
-    parser.add_argument(
         '--version', action='version', version=__version__,
         help='Print version number and exit.')
     parser.add_argument('--help', '-h', action='help', help='Show this help message and exit.')
 
     args = parser.parse_args()
 
-    if args.input is None:
+    if len(args.input) == 0:
         parser.print_help()
-        print('\nPlease supply an input path.')
+        print('\nPlease supply at least one input path.')
         exit(1)
 
-    ipath = args.input
+    return args
+
+
+def main():
+    args = parse_cli_args()
+    ipaths = args.input
+
     opath = args.output
     replacewith = args.replacewith
     show = not args.disable_gui
@@ -233,37 +252,42 @@ def main():
     mask_scale = args.mask_scale
     backend = args.backend
     in_shape = args.scale
-    extfilter = args.ext
     if in_shape is not None:
         w, h = in_shape.split('x')
         in_shape = int(w), int(h)
 
-    cam = ipath.startswith('<video')
-
-    if opath is None and not cam:
-        root, ext = os.path.splitext(ipath)
-        opath = f'{root}_anonymized{ext}'
 
     # TODO: scalar downscaling setting (-> in_shape), preserving aspect ratio
     centerface = CenterFace(in_shape=in_shape, backend=backend)
 
-    if os.path.isfile(ipath) or cam:
-        mime = mimetypes.guess_type(ipath)[0]
-        if cam or mime.startswith('video'):
+    multi_file = len(ipaths) > 1
+    if multi_file:
+        ipaths = tqdm.tqdm(ipaths, position=0)
+
+    for ipath in ipaths:
+        filetype = get_file_type(ipath)
+        is_cam = filetype == 'cam'
+        root, ext = os.path.splitext(ipath)
+        if opath is None and not is_cam:
+            root, ext = os.path.splitext(ipath)
+            opath = f'{root}_anonymized{ext}'
+        if filetype == 'video' or is_cam:
+            if isinstance(ipaths, tqdm.tqdm):
+                ipaths.set_description(f'Current file: {ipath}. Total progress')
             video_detect(
                 ipath=ipath,
                 opath=opath,
                 centerface=centerface,
                 threshold=threshold,
-                show=show,
-                cam=cam,
+                cam=is_cam,
                 replacewith=replacewith,
                 mask_scale=mask_scale,
                 ellipse=ellipse,
                 enumerate_dets=enumerate_dets,
-                nested=False,
+                show=False if multi_file else show,
+                nested=multi_file,
             )
-        elif mime.startswith('image'):
+        elif filetype == 'image':
             image_detect(
                 ipath=ipath,
                 opath=opath,
@@ -274,45 +298,12 @@ def main():
                 ellipse=ellipse,
                 enumerate_dets=enumerate_dets,
             )
+        elif filetype is None:
+            print(f'Can\'t determine file type of file {ipath}. Skipping...')
+        elif filetype == 'notfound':
+            print(f'File {ipath} not found. Skipping...')
         else:
-            raise ValueError(f'File {ipath} has an unknown MIME type {mime}.')
-    elif os.path.isdir(ipath):
-        paths = glob.glob(f'{ipath}/**/*.{extfilter}', recursive=True)
-        pbar = tqdm.tqdm(paths, position=0)
-        for p in pbar:
-            root, ext = os.path.splitext(p)
-            opath = f'{root}_anonymized{ext}'
-            mime = mimetypes.guess_type(p)[0]
-            if mime.startswith('video'):
-                pbar.set_description(f'Current video: {p}')
-                video_detect(
-                    ipath=p,
-                    opath=opath,
-                    centerface=centerface,
-                    threshold=threshold,
-                    cam=cam,
-                    replacewith=replacewith,
-                    mask_scale=mask_scale,
-                    ellipse=ellipse,
-                    enumerate_dets=enumerate_dets,
-                    show=False,
-                    nested=True,
-                )
-            elif mime.startswith('image'):
-                image_detect(
-                    ipath=p,
-                    opath=opath,
-                    centerface=centerface,
-                    threshold=threshold,
-                    replacewith=replacewith,
-                    mask_scale=mask_scale,
-                    ellipse=ellipse,
-                    enumerate_dets=enumerate_dets,
-                )
-            else:
-                print(f'File {p} has an unknown MIME type {mime}. Skipping...')
-    else:
-        raise FileNotFoundError(f'{ipath} not found.')
+            print(f'File {ipath} has an unknown type {filetype}. Skipping...')
 
 
 if __name__ == '__main__':

@@ -46,15 +46,16 @@ The output may vary depending on your version, but it should look similar to thi
 usage: deface [--output O] [--thresh T] [--scale WxH] [--disable-gui]
               [--enable-enum] [--enable-boxes] [--mask-scale M]
               [--replacewith {solid,blur,none}]
-              [--backend {auto,onnxrt,opencv}] [--ext EXT] [--version]
-              [--help]
-              [input]
+              [--backend {auto,onnxrt,opencv}] [--version] [--help]
+              [input [input ...]]
 
 Video anonymization by face detection
 
 positional arguments:
-  input                 Video/image/directory path or camera device name (the
-                        camera device is usually accessible as '<video0>').
+  input                 File path(s) or camera device name. It is possible to
+                        pass multiple paths by separating them by spaces or by
+                        using shell expansion (e.g. vids/*.mp4). Webcams are
+                        usually accessible as '<video0>'.
 
 optional arguments:
   --output O, -o O      Output file name (defaults to input path + postfix
@@ -73,8 +74,6 @@ optional arguments:
                         Anonymization filter mode for face regions.
   --backend {auto,onnxrt,opencv}
                         Backend for ONNX model execution.
-  --ext EXT             Filter by file extension (no filter (*) by default).
-                        Only applies if the input argument is a directory.
   --version             Print version number and exit.
   --help, -h            Show this help message and exit.
 ```
