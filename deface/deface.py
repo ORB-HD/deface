@@ -92,7 +92,7 @@ def video_detect(
         opath: str,
         centerface: str,
         threshold: float,
-        show: bool,
+        enable_preview: bool,
         cam: bool,
         nested: bool,
         replacewith: str,
@@ -141,8 +141,8 @@ def video_detect(
         if opath is not None:
             writer.append_data(frame)
 
-        if show:
-            cv2.imshow('Anonymized', frame[:, :, ::-1])  # RGB -> RGB
+        if enable_preview:
+            cv2.imshow('Preview of anonymization results (quit by pressing Q or Escape)', frame[:, :, ::-1])  # RGB -> RGB
             # Press Q or Esc on keyboard to stop
             if cv2.waitKey(1) & 0xFF in [ord('q'), 27]:  # 27 is the escape key code
                 cv2.destroyAllWindows()
@@ -250,7 +250,7 @@ def main():
 
     base_opath = args.output
     replacewith = args.replacewith
-    show = args.enable_preview
+    enable_preview = args.enable_preview
     enumerate_dets = args.enable_enum
     threshold = args.thresh
     ellipse = not args.enable_boxes
@@ -273,14 +273,14 @@ def main():
         opath = base_opath
         if ipath == 'cam':
             ipath = '<video0>'
-            show = True
+            enable_preview = True
         filetype = get_file_type(ipath)
         is_cam = filetype == 'cam'
         if opath is None and not is_cam:
             root, ext = os.path.splitext(ipath)
             opath = f'{root}_anonymized{ext}'
         print(f'Input:  {ipath}\nOutput: {opath}')
-        if opath is None and not show:
+        if opath is None and not enable_preview:
             print('No output file is specified and the preview GUI is disabled. No output will be produced.')
         if filetype == 'video' or is_cam:
             video_detect(
@@ -293,7 +293,7 @@ def main():
                 mask_scale=mask_scale,
                 ellipse=ellipse,
                 enumerate_dets=enumerate_dets,
-                show=show,
+                enable_preview=enable_preview,
                 nested=multi_file,
             )
         elif filetype == 'image':
