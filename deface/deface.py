@@ -2,10 +2,11 @@
 
 import argparse
 import glob
+import json
 import mimetypes
 import os
 import sys
-from typing import Tuple
+from typing import Dict, Tuple
 
 import tqdm
 import skimage.draw
@@ -99,6 +100,7 @@ def video_detect(
         mask_scale: float,
         ellipse: bool,
         enumerate_dets: bool,
+        ffmpeg_config: Dict[str, str]
 ):
     try:
         reader: imageio.plugins.ffmpeg.FfmpegFormat.Reader = imageio.get_reader(ipath)
@@ -124,9 +126,7 @@ def video_detect(
 
     if opath is not None:
         writer: imageio.plugins.ffmpeg.FfmpegFormat.Writer = imageio.get_writer(
-            opath, format='FFMPEG', mode='I', fps=meta['fps'],
-            codec='libx264'
-            # codec='libx265'
+            opath, format='FFMPEG', mode='I', fps=meta['fps'], **ffmpeg_config
         )
 
     for frame in read_iter:
@@ -223,6 +223,10 @@ def parse_cli_args():
         '--replacewith', default='blur', choices=['solid', 'blur', 'none'],
         help='Anonymization filter mode for face regions.')
     parser.add_argument(
+        '--ffmpeg-config', default={'codec': 'libx264'}, type=json.loads,
+        help='FFMPEG config arguments for encoding output videos (default: "{\'codec\': \'libx264\'}". This argument is expected in JSON notation. For a list of possible options, refer to the ffmpeg-imageio docs'
+    )  # See https://imageio.readthedocs.io/en/stable/format_ffmpeg.html#parameters-for-saving
+    parser.add_argument(
         '--backend', default='auto', choices=['auto', 'onnxrt', 'opencv'],
         help='Backend for ONNX model execution.')
     parser.add_argument(
@@ -255,6 +259,7 @@ def main():
     threshold = args.thresh
     ellipse = not args.enable_boxes
     mask_scale = args.mask_scale
+    ffmpeg_config = args.ffmpeg_config
     backend = args.backend
     in_shape = args.scale
     if in_shape is not None:
@@ -295,6 +300,7 @@ def main():
                 enumerate_dets=enumerate_dets,
                 enable_preview=enable_preview,
                 nested=multi_file,
+                ffmpeg_config=ffmpeg_config
             )
         elif filetype == 'image':
             image_detect(

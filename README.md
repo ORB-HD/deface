@@ -48,7 +48,8 @@ The output may vary depending on your version, but it should look similar to thi
 usage: deface [--output O] [--thresh T] [--scale WxH] [--enable-preview]
               [--enable-enum] [--enable-boxes] [--mask-scale M]
               [--replacewith {solid,blur,none}]
-              [--backend {auto,onnxrt,opencv}] [--version] [--help]
+              [--ffmpeg-config FFMPEG_CONFIG] [--backend {auto,onnxrt,opencv}]
+              [--version] [--help]
               [input [input ...]]
 
 Video anonymization by face detection
@@ -75,6 +76,11 @@ optional arguments:
                         cover the complete face (default: 1.3).)
   --replacewith {solid,blur,none}
                         Anonymization filter mode for face regions.
+  --ffmpeg-config FFMPEG_CONFIG
+                        FFMPEG config arguments for encoding output videos
+                        (default: "{'codec': 'libx264'}". This argument is
+                        expected in JSON notation. For a list of possible
+                        options, refer to the ffmpeg-imageio docs
   --backend {auto,onnxrt,opencv}
                         Backend for ONNX model execution.
   --version             Print version number and exit.
