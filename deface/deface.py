@@ -88,6 +88,7 @@ def cam_read_iter(reader):
     while True:
         yield reader.get_next_data()
 
+
 def video_detect(
         ipath: str,
         opath: str,
@@ -143,7 +144,6 @@ def video_detect(
 
         if enable_preview:
             cv2.imshow('Preview of anonymization results (quit by pressing Q or Escape)', frame[:, :, ::-1])  # RGB -> RGB
-            # Press Q or Esc on keyboard to stop
             if cv2.waitKey(1) & 0xFF in [ord('q'), 27]:  # 27 is the escape key code
                 cv2.destroyAllWindows()
                 break
@@ -163,6 +163,7 @@ def image_detect(
         mask_scale: float,
         ellipse: bool,
         enumerate_dets: bool,
+        enable_preview: bool
 ):
     frame = imageio.imread(ipath)
 
@@ -173,6 +174,11 @@ def image_detect(
         dets, frame, mask_scale=mask_scale,
         replacewith=replacewith, ellipse=ellipse, enumerate_dets=enumerate_dets
     )
+
+    if enable_preview:
+        cv2.imshow('Preview of anonymization results (quit by pressing Q or Escape)', frame[:, :, ::-1])  # RGB -> RGB
+        if cv2.waitKey(0) & 0xFF in [ord('q'), 27]:  # 27 is the escape key code
+            cv2.destroyAllWindows()
 
     imageio.imsave(opath, frame)
     # print(f'Output saved to {opath}')
@@ -312,6 +318,7 @@ def main():
                 mask_scale=mask_scale,
                 ellipse=ellipse,
                 enumerate_dets=enumerate_dets,
+                enable_preview=enable_preview
             )
         elif filetype is None:
             print(f'Can\'t determine file type of file {ipath}. Skipping...')
