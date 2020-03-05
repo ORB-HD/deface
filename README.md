@@ -4,6 +4,14 @@
 It works by first detecting all human faces in each video frame and then applying an anonymization filter (blurring or black boxes) on each detected face region.
 All audio tracks are discarded as well.
 
+**Original**
+
+<img src="docs/city.jpg" width="100%"/>
+
+**`deface` output (using default options)**
+
+<img src="docs/city_anonymized.jpg" width="100%"/> 
+
 
 ## Installation
 
@@ -34,7 +42,7 @@ If you have a camera (webcam) attached to your computer, you can run `deface` on
 
     $ deface cam
 
-This is a shortcut for `$ deface -p '<video0>'`, where `<video0>'` (literal) is a  camera device identifier. If you have multiple cameras installed, you can try `<videoN>'`, where `N` is the index of the camera.
+This is a shortcut for `$ deface -p '<video0>'`, where `'<video0>'` (literal) is a  camera device identifier. If you have multiple cameras installed, you can try `'<videoN>'`, where `N` is the index of the camera (see [imageio-ffmpeg docs](https://imageio.readthedocs.io/en/stable/format_ffmpeg.html)).
 
 ### Advanced usage
 
@@ -118,4 +126,5 @@ Although the face detector is originally intended to be used for normal 2D image
 ## Credits
 
 - `centerface.onnx` (original) and `centerface.py` (modified) are based on https://github.com/Star-Clouds/centerface (revision [8c39a49](https://github.com/Star-Clouds/CenterFace/tree/8c39a497afb78fb2c064eb84bf010c273bb7d3ce)),
-  [released under MIT license](https://github.com/Star-Clouds/CenterFace/blob/36afed/LICENSE)
+  [released under MIT license](https://github.com/Star-Clouds/CenterFace/blob/36afed/LICENSE).
+- The original source of the example images in the `docs` directory can be found [here](https://www.pexels.com/de-de/foto/stadt-kreuzung-strasse-menschen-109919/) (released under the [Pexels photo license](https://www.pexels.com/photo-license/)).
