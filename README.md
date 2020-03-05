@@ -1,6 +1,6 @@
 # `deface`: Video anonymization by face detection
 
-`deface` is a simple command-line tool for automatic anonymization of faces in videos.
+`deface` is a simple command-line tool for automatic anonymization of faces in videos or photos.
 It works by first detecting all human faces in each video frame and then applying an anonymization filter (blurring or black boxes) on each detected face region.
 All audio tracks are discarded as well.
 
@@ -10,10 +10,12 @@ All audio tracks are discarded as well.
 
 **`deface` output (using default options)**
 
-<img src="docs/city_anonymized.jpg" width="100%"/> 
+<img src="docs/city_anonymized.jpg" width="100%" alt="$ deface docs/city.jpg"/>
 
 
 ## Installation
+
+`deface` supports all commonly used operating systems (Linux, Windows, MacOS), but it requires using a command-line shell such as bash. There are currently no plans of creating a graphical user interface.
 
 The recommended way of installing `deface` is via the `pip` package manager. This requires that you have Python 3.6 or later installed on your system. It is recommended to set up and activate a new [virtual environment](https://realpython.com/python-virtual-environments-a-primer/) first. Then you can install the latest release of `deface` and all necessary dependencies by running:
 
@@ -44,13 +46,13 @@ If you have a camera (webcam) attached to your computer, you can run `deface` on
 
 This is a shortcut for `$ deface -p '<video0>'`, where `'<video0>'` (literal) is a  camera device identifier. If you have multiple cameras installed, you can try `'<videoN>'`, where `N` is the index of the camera (see [imageio-ffmpeg docs](https://imageio.readthedocs.io/en/stable/format_ffmpeg.html)).
 
-### Advanced usage
+### CLI usage and options summary
 
-To get an overview of the usage and available options, run:
+To get an overview of usage and available options, run:
 
     $ deface -h
 
-The output may vary depending on your version, but it should look similar to this:
+The output may vary depending on your installed version, but it should look similar to this:
 
 ```
 usage: deface [--output O] [--thresh T] [--scale WxH] [--enable-preview]
@@ -94,6 +96,17 @@ optional arguments:
   --version             Print version number and exit.
   --help, -h            Show this help message and exit.
 ```
+
+## Examples
+
+### Drawing black boxes
+
+By default, each detected face is anonymized by applying a blur filter to an ellipse region that covers the face. If you prefer to anonymize faces by drawing black boxes on top of them, you can achieve this through the `--enable-boxes` and `--replacewith` options:
+
+    $ deface docs/city.jpg --enable-boxes --replacewith solid -o docs/city_anonymized_boxes.jpg
+
+<img src="docs/city_anonymized_boxes.jpg" width="100%" alt="$ deface docs/city.jpg --enable-boxes --replacewith solid -o docs/city_anonymized_boxes.jpg"/>
+
 
 
 ## Hardware acceleration
