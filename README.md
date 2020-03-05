@@ -30,9 +30,11 @@ This will show you a live preview of the output and write the the output video t
 
 ### Live capture demo
 
-If you have a camera (webcam) attached to your computer, you can run `deface` on the live video input by calling it with the camera device specifier (usually `'<video0>'`) as the input argument. To test this feature, try running:
+If you have a camera (webcam) attached to your computer, you can run `deface` on the live video input by calling it with the `cam` argument instead of an input path:
 
-    $ deface '<video0>'
+    $ deface cam
+
+This is a shortcut for `$ deface -p '<video0>'`, where `<video0>'` (literal) is a  camera device identifier. If you have multiple cameras installed, you can try `<videoN>'`, where `N` is the index of the camera.
 
 ### Advanced usage
 
@@ -43,7 +45,7 @@ To get an overview of the usage and available options, run:
 The output may vary depending on your version, but it should look similar to this:
 
 ```
-usage: deface [--output O] [--thresh T] [--scale WxH] [--disable-gui]
+usage: deface [--output O] [--thresh T] [--scale WxH] [--enable-preview]
               [--enable-enum] [--enable-boxes] [--mask-scale M]
               [--replacewith {solid,blur,none}]
               [--backend {auto,onnxrt,opencv}] [--version] [--help]
@@ -54,8 +56,10 @@ Video anonymization by face detection
 positional arguments:
   input                 File path(s) or camera device name. It is possible to
                         pass multiple paths by separating them by spaces or by
-                        using shell expansion (e.g. vids/*.mp4). Webcams are
-                        usually accessible as '<video0>'.
+                        using shell expansion (e.g. `$ deface vids/*.mp4`). If
+                        a camera is installed, a live webcam demo can be
+                        started by running `$ deface cam` (which is a shortcut
+                        for `$ deface -p '<video0>'`.
 
 optional arguments:
   --output O, -o O      Output file name (defaults to input path + postfix
@@ -64,8 +68,7 @@ optional arguments:
                         false positive and false negative rate).
   --scale WxH, -s WxH   Downscale images for network inference to this size
                         (format: WxH, example: --scale=640x360).
-  --disable-gui, -q     Disable preview GUI. Only applies if the input is a
-                        single video file (else it's already off by default).
+  --enable-preview, -p  Enable live preview GUI (can decrease performance).
   --enable-enum, -e     Draw detection numbers and scores into the output.
   --enable-boxes        Use boxes instead of ellipse masks.
   --mask-scale M        Scale factor for face masks, to make sure that masks
