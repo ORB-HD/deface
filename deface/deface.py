@@ -143,8 +143,9 @@ def video_detect(
 
         if show:
             cv2.imshow('Anonymized', frame[:, :, ::-1])  # RGB -> RGB
-            # Press Q on keyboard to stop
-            if cv2.waitKey(1) & 0xFF == ord('q'):
+            # Press Q or Esc on keyboard to stop
+            if cv2.waitKey(1) & 0xFF in [ord('q'), 27]:  # 27 is the escape key code
+                cv2.destroyAllWindows()
                 break
         bar.update()
     reader.close()
