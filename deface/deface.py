@@ -118,7 +118,7 @@ def video_detect(
         read_iter = reader.iter_data()
         nframes = reader.count_frames()
     if nested:
-        bar = tqdm.tqdm(dynamic_ncols=True, total=nframes, position=1, leave=False)
+        bar = tqdm.tqdm(dynamic_ncols=True, total=nframes, position=1, leave=True)
     else:
         bar = tqdm.tqdm(dynamic_ncols=True, total=nframes)
 
@@ -196,7 +196,7 @@ def parse_cli_args():
     parser = argparse.ArgumentParser(description='Video anonymization by face detection', add_help=False)
     parser.add_argument(
         'input', nargs='*',
-        help=f'File path(s) or camera device name. It is possible to pass multiple paths by separating them by spaces or by using shell expansion (e.g. vids/*.mp4). Webcams are usually accessible as \'<video0>\'.')
+        help=f'File path(s) or camera device name. It is possible to pass multiple paths by separating them by spaces or by using shell expansion (e.g. `$ deface vids/*.mp4`). If a camera is installed, a live webcam demo can be started by running `$ deface cam` (which is a shortcut for `$ deface -p \'<video0>\'`.')
     parser.add_argument(
         '--output', '-o', default=None, metavar='O',
         help='Output file name (defaults to input path + postfix "_anonymized").')
@@ -207,8 +207,8 @@ def parse_cli_args():
         '--scale', '-s', default=None, metavar='WxH',
         help='Downscale images for network inference to this size (format: WxH, example: --scale=640x360).')
     parser.add_argument(
-        '--disable-gui', '-q', default=False, action='store_true',
-        help='Disable preview GUI. Only applies if the input is a single video file (else it\'s already off by default).')
+        '--enable-preview', '-p', default=False, action='store_true',
+        help='Enable live preview GUI (can decrease performance).')
     parser.add_argument(
         '--enable-enum', '-e', default=False, action='store_true',
         help='Draw detection numbers and scores into the output.')
@@ -236,6 +236,10 @@ def parse_cli_args():
         print('\nPlease supply at least one input path.')
         exit(1)
 
+    if args.input == ['cam']:  # Shortcut for webcam demo with live preview
+        args.input = ['<video0>']
+        args.enable_preview = True
+
     return args
 
 
@@ -243,9 +247,9 @@ def main():
     args = parse_cli_args()
     ipaths = args.input
 
-    opath = args.output
+    base_opath = args.output
     replacewith = args.replacewith
-    show = not args.disable_gui
+    show = args.enable_preview
     enumerate_dets = args.enable_enum
     threshold = args.thresh
     ellipse = not args.enable_boxes
@@ -262,18 +266,22 @@ def main():
 
     multi_file = len(ipaths) > 1
     if multi_file:
-        ipaths = tqdm.tqdm(ipaths, position=0)
+        ipaths = tqdm.tqdm(ipaths, position=0, dynamic_ncols=True, desc='Batch progress')
 
     for ipath in ipaths:
+        opath = base_opath
+        if ipath == 'cam':
+            ipath = '<video0>'
+            show = True
         filetype = get_file_type(ipath)
         is_cam = filetype == 'cam'
-        root, ext = os.path.splitext(ipath)
         if opath is None and not is_cam:
             root, ext = os.path.splitext(ipath)
             opath = f'{root}_anonymized{ext}'
+        print(f'Input:  {ipath}\nOutput: {opath}')
+        if opath is None and not show:
+            print('No output file is specified and the preview GUI is disabled. No output will be produced.')
         if filetype == 'video' or is_cam:
-            if isinstance(ipaths, tqdm.tqdm):
-                ipaths.set_description(f'Current file: {ipath}. Total progress')
             video_detect(
                 ipath=ipath,
                 opath=opath,
@@ -284,7 +292,7 @@ def main():
                 mask_scale=mask_scale,
                 ellipse=ellipse,
                 enumerate_dets=enumerate_dets,
-                show=False if multi_file else show,
+                show=show,
                 nested=multi_file,
             )
         elif filetype == 'image':
