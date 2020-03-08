@@ -5,7 +5,7 @@ It works by first detecting all human faces in each video frame and then applyin
 All audio tracks are discarded as well.
 
 
-Original                        | `deface` output (using default options)
+Original frame                  | `deface` output (using default options)
 :------------------------------:|:---------------------------------------------------:
 ![docs/city.jpg](docs/city.jpg) | ![$ deface docs/city.jpg](docs/city_anonymized.jpg)
 
@@ -53,7 +53,7 @@ The output may vary depending on your installed version, but it should look simi
 
 ```
 usage: deface [--output O] [--thresh T] [--scale WxH] [--enable-preview]
-              [--enable-enum] [--enable-boxes] [--mask-scale M]
+              [--enable-boxes] [--draw-scores] [--mask-scale M]
               [--replacewith {solid,blur,none}]
               [--ffmpeg-config FFMPEG_CONFIG] [--backend {auto,onnxrt,opencv}]
               [--version] [--help]
@@ -77,8 +77,8 @@ optional arguments:
   --scale WxH, -s WxH   Downscale images for network inference to this size
                         (format: WxH, example: --scale=640x360).
   --enable-preview, -p  Enable live preview GUI (can decrease performance).
-  --enable-enum, -e     Draw detection numbers and scores into the output.
   --enable-boxes        Use boxes instead of ellipse masks.
+  --draw-scores         Draw detection scores onto outputs.
   --mask-scale M        Scale factor for face masks, to make sure that masks
                         cover the complete face (default: 1.3).)
   --replacewith {solid,blur,none}
@@ -94,7 +94,9 @@ optional arguments:
   --help, -h            Show this help message and exit.
 ```
 
-## Examples
+## Usage examples
+
+In most use cases the default configuration should be sufficient, but depending on individual requirements and type of media to be processed, some of the options might need to be adjusted. In this section, some common example scenarios that require option changes are presented. All of the examples use the photo [docs/city.jpg](docs/city.jpg), but they work the same on any video or photo file.
 
 ### Drawing black boxes
 
@@ -102,8 +104,23 @@ By default, each detected face is anonymized by applying a blur filter to an ell
 
     $ deface docs/city.jpg --enable-boxes --replacewith solid -o docs/city_anonymized_boxes.jpg
 
-<img src="docs/city_anonymized_boxes.jpg" width="100%" alt="$ deface docs/city.jpg --enable-boxes --replacewith solid -o docs/city_anonymized_boxes.jpg"/>
+<img src="docs/city_anonymized_boxes.jpg" width="70%" alt="$ deface docs/city.jpg --enable-boxes --replacewith solid -o docs/city_anonymized_boxes.jpg"/>
 
+
+### Tuning detection thresholds
+
+TODO left: low threshold, right: high threshold
+
+
+### Rendering detection score overlays
+
+If you are interested in seeing the "faceness" score (a score between 0 and 1 that roughly corresponds to the neural network's confidence that something *is* a face) of each detected face in the input, you can enable the `--draw-scores` option to draw the score of each detection directly above its location.
+
+    $ deface docs/city.jpg --draw-scores -o docs/city_anonymized_scores.jpg
+
+<img src="docs/city_anonymized_scores.jpg" width="70%" alt="$ deface docs/city.jpg --draw-scores -o docs/city_anonymized_scores.jpg"/>
+
+This option can be useful to figure out an optimal value for the detection threshold that can then be set through the `--thresh` option.
 
 
 ## Hardware acceleration
