@@ -5,17 +5,10 @@ It works by first detecting all human faces in each video frame and then applyin
 All audio tracks are discarded as well.
 
 
-<div id="images" style="display: flex;">
-<figure>
-    <figcaption><b>Original</b></figcaption>
-    <img class="fans" src="docs/city.jpg" alt="docs/city.jpg" width="100%"/>
-</figure>
+Original                        | `deface` output (using default options)
+:------------------------------:|:---------------------------------------------------:
+![docs/city.jpg](docs/city.jpg) | ![$ deface docs/city.jpg](docs/city_anonymized.jpg)
 
-<figure>
-    <figcaption><b><tt>deface</tt> output (using default options)</b></figcaption>
-    <img class="fans" src="docs/city_anonymized.jpg" alt="$ deface docs/city.jpg" width="100%"/>
-</figure>
-</div>
 
 ## Installation
 
