@@ -36,7 +36,7 @@ def draw_det(
         frame, score, det_idx, x1, y1, x2, y2,
         replacewith: str = 'blur',
         ellipse: bool = True,
-        enumerate_dets: bool = False,
+        draw_scores: bool = False,
         ovcolor: Tuple[int] = (0, 0, 0)
 ):
     if replacewith == 'solid':
@@ -57,16 +57,16 @@ def draw_det(
             frame[y1:y2, x1:x2] = blurred_box
     elif replacewith == 'none':
         pass
-    if enumerate_dets:
+    if draw_scores:
         cv2.putText(
-            frame, f'{det_idx + 1}: {score:.2f}', (x1 +0, y1 - 20),
-            cv2.FONT_HERSHEY_SIMPLEX, 1.0, (128, 255, 128)
+            frame, f'{score:.2f}', (x1 + 0, y1 - 20),
+            cv2.FONT_HERSHEY_DUPLEX, 0.5, (0, 255, 0)
         )
 
 
 def anonymize_frame(
         dets, frame, mask_scale,
-        replacewith, ellipse, enumerate_dets
+        replacewith, ellipse, draw_scores
 ):
     for i, det in enumerate(dets):
         boxes, score = det[:4], det[4]
@@ -80,7 +80,7 @@ def anonymize_frame(
             frame, score, i, x1, y1, x2, y2,
             replacewith=replacewith,
             ellipse=ellipse,
-            enumerate_dets=enumerate_dets,
+            draw_scores=draw_scores,
         )
 
 
@@ -100,7 +100,7 @@ def video_detect(
         replacewith: str,
         mask_scale: float,
         ellipse: bool,
-        enumerate_dets: bool,
+        draw_scores: bool,
         ffmpeg_config: Dict[str, str]
 ):
     try:
@@ -136,7 +136,7 @@ def video_detect(
 
         anonymize_frame(
             dets, frame, mask_scale=mask_scale,
-            replacewith=replacewith, ellipse=ellipse, enumerate_dets=enumerate_dets
+            replacewith=replacewith, ellipse=ellipse, draw_scores=draw_scores
         )
 
         if opath is not None:
@@ -162,7 +162,7 @@ def image_detect(
         replacewith: str,
         mask_scale: float,
         ellipse: bool,
-        enumerate_dets: bool,
+        draw_scores: bool,
         enable_preview: bool
 ):
     frame = imageio.imread(ipath)
@@ -172,7 +172,7 @@ def image_detect(
 
     anonymize_frame(
         dets, frame, mask_scale=mask_scale,
-        replacewith=replacewith, ellipse=ellipse, enumerate_dets=enumerate_dets
+        replacewith=replacewith, ellipse=ellipse, draw_scores=draw_scores
     )
 
     if enable_preview:
@@ -217,11 +217,11 @@ def parse_cli_args():
         '--enable-preview', '-p', default=False, action='store_true',
         help='Enable live preview GUI (can decrease performance).')
     parser.add_argument(
-        '--enable-enum', '-e', default=False, action='store_true',
-        help='Draw detection numbers and scores into the output.')
-    parser.add_argument(
         '--enable-boxes', default=False, action='store_true',
         help='Use boxes instead of ellipse masks.')
+    parser.add_argument(
+        '--draw-scores', default=False, action='store_true',
+        help='Draw detection scores onto outputs.')
     parser.add_argument(
         '--mask-scale', default=1.3, type=float, metavar='M',
         help='Scale factor for face masks, to make sure that masks cover the complete face (default: 1.3).)')
@@ -261,7 +261,7 @@ def main():
     base_opath = args.output
     replacewith = args.replacewith
     enable_preview = args.enable_preview
-    enumerate_dets = args.enable_enum
+    draw_scores = args.draw_scores
     threshold = args.thresh
     ellipse = not args.enable_boxes
     mask_scale = args.mask_scale
@@ -303,7 +303,7 @@ def main():
                 replacewith=replacewith,
                 mask_scale=mask_scale,
                 ellipse=ellipse,
-                enumerate_dets=enumerate_dets,
+                draw_scores=draw_scores,
                 enable_preview=enable_preview,
                 nested=multi_file,
                 ffmpeg_config=ffmpeg_config
@@ -317,7 +317,7 @@ def main():
                 replacewith=replacewith,
                 mask_scale=mask_scale,
                 ellipse=ellipse,
-                enumerate_dets=enumerate_dets,
+                draw_scores=draw_scores,
                 enable_preview=enable_preview
             )
         elif filetype is None:
