@@ -41,7 +41,7 @@ If you have a camera (webcam) attached to your computer, you can run `deface` on
 
     $ deface cam
 
-This is a shortcut for `$ deface -p '<video0>'`, where `'<video0>'` (literal) is a  camera device identifier. If you have multiple cameras installed, you can try `'<videoN>'`, where `N` is the index of the camera (see [imageio-ffmpeg docs](https://imageio.readthedocs.io/en/stable/format_ffmpeg.html)).
+This is a shortcut for `$ deface --preview '<video0>'`, where `'<video0>'` (literal) is a  camera device identifier. If you have multiple cameras installed, you can try `'<videoN>'`, where `N` is the index of the camera (see [imageio-ffmpeg docs](https://imageio.readthedocs.io/en/stable/format_ffmpeg.html)).
 
 ### CLI usage and options summary
 
@@ -52,8 +52,8 @@ To get an overview of usage and available options, run:
 The output may vary depending on your installed version, but it should look similar to this:
 
 ```
-usage: deface [--output O] [--thresh T] [--scale WxH] [--enable-preview]
-              [--enable-boxes] [--draw-scores] [--mask-scale M]
+usage: deface [--output O] [--thresh T] [--scale WxH] [--preview] [--boxes]
+              [--draw-scores] [--mask-scale M]
               [--replacewith {blur,solid,none}]
               [--ffmpeg-config FFMPEG_CONFIG] [--backend {auto,onnxrt,opencv}]
               [--version] [--help]
@@ -76,8 +76,8 @@ optional arguments:
                         false positive and false negative rate).
   --scale WxH, -s WxH   Downscale images for network inference to this size
                         (format: WxH, example: --scale=640x360).
-  --enable-preview, -p  Enable live preview GUI (can decrease performance).
-  --enable-boxes        Use boxes instead of ellipse masks.
+  --preview, -p         Enable live preview GUI (can decrease performance).
+  --boxes               Use boxes instead of ellipse masks.
   --draw-scores         Draw detection scores onto outputs.
   --mask-scale M        Scale factor for face masks, to make sure that masks
                         cover the complete face (default: 1.3).)
@@ -103,9 +103,9 @@ In most use cases the default configuration should be sufficient, but depending 
 
 ### Drawing black boxes
 
-By default, each detected face is anonymized by applying a blur filter to an ellipse region that covers the face. If you prefer to anonymize faces by drawing black boxes on top of them, you can achieve this through the `--enable-boxes` and `--replacewith` options:
+By default, each detected face is anonymized by applying a blur filter to an ellipse region that covers the face. If you prefer to anonymize faces by drawing black boxes on top of them, you can achieve this through the `--boxes` and `--replacewith` options:
 
-    $ deface examples/city.jpg --enable-boxes --replacewith solid -o examples/city_anonymized_boxes.jpg
+    $ deface examples/city.jpg --boxes --replacewith solid -o examples/city_anonymized_boxes.jpg
 
 <img src="examples/city_anonymized_boxes.jpg" width="70%" alt="$ deface examples/city.jpg --enable-boxes --replacewith solid -o examples/city_anonymized_boxes.jpg"/>
 

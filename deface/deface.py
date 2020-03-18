@@ -214,10 +214,10 @@ def parse_cli_args():
         '--scale', '-s', default=None, metavar='WxH',
         help='Downscale images for network inference to this size (format: WxH, example: --scale=640x360).')
     parser.add_argument(
-        '--enable-preview', '-p', default=False, action='store_true',
+        '--preview', '-p', default=False, action='store_true',
         help='Enable live preview GUI (can decrease performance).')
     parser.add_argument(
-        '--enable-boxes', default=False, action='store_true',
+        '--boxes', default=False, action='store_true',
         help='Use boxes instead of ellipse masks.')
     parser.add_argument(
         '--draw-scores', default=False, action='store_true',
@@ -260,10 +260,10 @@ def main():
 
     base_opath = args.output
     replacewith = args.replacewith
-    enable_preview = args.enable_preview
+    enable_preview = args.preview
     draw_scores = args.draw_scores
     threshold = args.thresh
-    ellipse = not args.enable_boxes
+    ellipse = not args.boxes
     mask_scale = args.mask_scale
     ffmpeg_config = args.ffmpeg_config
     backend = args.backend
