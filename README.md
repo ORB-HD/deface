@@ -7,7 +7,7 @@ All audio tracks are discarded as well.
 
 Original frame                  | `deface` output (using default options)
 :------------------------------:|:---------------------------------------------------:
-![docs/city.jpg](docs/city.jpg) | ![$ deface docs/city.jpg](docs/city_anonymized.jpg)
+![examples/city.jpg](examples/city.jpg) | ![$ deface examples/city.jpg](examples/city_anonymized.jpg)
 
 
 ## Installation
@@ -96,15 +96,15 @@ optional arguments:
 
 ## Usage examples
 
-In most use cases the default configuration should be sufficient, but depending on individual requirements and type of media to be processed, some of the options might need to be adjusted. In this section, some common example scenarios that require option changes are presented. All of the examples use the photo [docs/city.jpg](docs/city.jpg), but they work the same on any video or photo file.
+In most use cases the default configuration should be sufficient, but depending on individual requirements and type of media to be processed, some of the options might need to be adjusted. In this section, some common example scenarios that require option changes are presented. All of the examples use the photo [examples/city.jpg](examples/city.jpg), but they work the same on any video or photo file.
 
 ### Drawing black boxes
 
 By default, each detected face is anonymized by applying a blur filter to an ellipse region that covers the face. If you prefer to anonymize faces by drawing black boxes on top of them, you can achieve this through the `--enable-boxes` and `--replacewith` options:
 
-    $ deface docs/city.jpg --enable-boxes --replacewith solid -o docs/city_anonymized_boxes.jpg
+    $ deface examples/city.jpg --enable-boxes --replacewith solid -o examples/city_anonymized_boxes.jpg
 
-<img src="docs/city_anonymized_boxes.jpg" width="70%" alt="$ deface docs/city.jpg --enable-boxes --replacewith solid -o docs/city_anonymized_boxes.jpg"/>
+<img src="examples/city_anonymized_boxes.jpg" width="70%" alt="$ deface examples/city.jpg --enable-boxes --replacewith solid -o examples/city_anonymized_boxes.jpg"/>
 
 
 ### Tuning detection thresholds
@@ -116,9 +116,9 @@ TODO left: low threshold, right: high threshold
 
 If you are interested in seeing the "faceness" score (a score between 0 and 1 that roughly corresponds to the detector's confidence that something *is* a face) of each detected face in the input, you can enable the `--draw-scores` option to draw the score of each detection directly above its location.
 
-    $ deface docs/city.jpg --draw-scores -o docs/city_anonymized_scores.jpg
+    $ deface examples/city.jpg --draw-scores -o examples/city_anonymized_scores.jpg
 
-<img src="docs/city_anonymized_scores.jpg" width="70%" alt="$ deface docs/city.jpg --draw-scores -o docs/city_anonymized_scores.jpg"/>
+<img src="examples/city_anonymized_scores.jpg" width="70%" alt="$ deface examples/city.jpg --draw-scores -o examples/city_anonymized_scores.jpg"/>
 
 This option can be useful to figure out an optimal value for the detection threshold that can then be set through the `--thresh` option.
 
@@ -154,4 +154,4 @@ The face bounding boxes predicted by the CenterFace detector are then used as ma
 
 - `centerface.onnx` (original) and `centerface.py` (modified) are based on https://github.com/Star-Clouds/centerface (revision [8c39a49](https://github.com/Star-Clouds/CenterFace/tree/8c39a497afb78fb2c064eb84bf010c273bb7d3ce)),
   [released under MIT license](https://github.com/Star-Clouds/CenterFace/blob/36afed/LICENSE).
-- The original source of the example images in the `docs` directory can be found [here](https://www.pexels.com/de-de/foto/stadt-kreuzung-strasse-menschen-109919/) (released under the [Pexels photo license](https://www.pexels.com/photo-license/)).
+- The original source of the example images in the `examples` directory can be found [here](https://www.pexels.com/de-de/foto/stadt-kreuzung-strasse-menschen-109919/) (released under the [Pexels photo license](https://www.pexels.com/photo-license/)).
