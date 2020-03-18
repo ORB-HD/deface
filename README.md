@@ -5,8 +5,8 @@ It works by first detecting all human faces in each video frame and then applyin
 All audio tracks are discarded as well.
 
 
-Original frame                  | `deface` output (using default options)
-:------------------------------:|:---------------------------------------------------:
+Original frame | `deface` output (using default options)
+:--:|:--:
 ![examples/city.jpg](examples/city.jpg) | ![$ deface examples/city.jpg](examples/city_anonymized.jpg)
 
 
@@ -113,12 +113,23 @@ By default, each detected face is anonymized by applying a blur filter to an ell
 
 ### Tuning detection thresholds
 
-TODO left: low threshold, right: high threshold
+The detection threshold (`--thresh`, `-t`) is used to define how confident the detector needs to be for classifying some region as a face. By default this is set to the value 0.2, which was found to work well on many test videos.
+
+If you are experiencing too many false positives (i.e. anonymization filters applied at non-face regions) on your own video data, consider increasing the threshold.
+On the other hand, if there are too many false negative errors (visible faces that are not anonymized), lowering the threshold is advisable.
+
+The optimal value can depend on many factors such as video quality, lighting conditions and prevalence of partial occlusions. To optimize this value, you can set threshold to a very low value and then draw detection score overlays, as described in the [section below](###Drawing-detection-score-overlays).
+
+To demonstrate the effects of a threshold that is set too low or too high, see the examples outputs below:
+
+`--thresh 0.02` (notice the false positives, e.g. at hand regions) | `--thresh 0.7` (notice the false negatives, especially at partially occluded faces)
+:--:|:--:
+![examples/city_anonymized_thresh0.02.jpg](examples/city_anonymized_thresh0.02.jpg) | ![$ deface examples/city_anonymized_thresh0.7.jpg](examples/city_anonymized_thresh0.7.jpg)
 
 
 ### Drawing detection score overlays
 
-If you are interested in seeing the "faceness" score (a score between 0 and 1 that roughly corresponds to the detector's confidence that something *is* a face) of each detected face in the input, you can enable the `--draw-scores` option to draw the score of each detection directly above its location.
+If you are interested in seeing the faceness score (a score between 0 and 1 that roughly corresponds to the detector's confidence that something *is* a face) of each detected face in the input, you can enable the `--draw-scores` option to draw the score of each detection directly above its location.
 
     $ deface examples/city.jpg --draw-scores -o examples/city_anonymized_scores.jpg
 
