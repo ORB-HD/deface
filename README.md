@@ -70,29 +70,30 @@ positional arguments:
                         for `$ deface -p '<video0>'`.
 
 optional arguments:
-  --output O, -o O      Output file name (defaults to input path + postfix
-                        "_anonymized").
+  --output O, -o O      Output file name. Defaults to input path + postfix
+                        "_anonymized".
   --thresh T, -t T      Detection threshold (tune this to trade off between
-                        false positive and false negative rate).
+                        false positive and false negative rate). Default: 0.2.
   --scale WxH, -s WxH   Downscale images for network inference to this size
                         (format: WxH, example: --scale=640x360).
   --preview, -p         Enable live preview GUI (can decrease performance).
   --boxes               Use boxes instead of ellipse masks.
   --draw-scores         Draw detection scores onto outputs.
   --mask-scale M        Scale factor for face masks, to make sure that masks
-                        cover the complete face (default: 1.3).)
+                        cover the complete face. Default: 1.3.
   --replacewith {blur,solid,none}
                         Anonymization filter mode for face regions. "blur"
                         applies a strong gaussian blurring, "solid" draws a
                         solid black box and "none" does leaves the input
-                        unchanged.
+                        unchanged. Default: "blur".
   --ffmpeg-config FFMPEG_CONFIG
-                        FFMPEG config arguments for encoding output videos
-                        (default: "{'codec': 'libx264'}". This argument is
-                        expected in JSON notation. For a list of possible
-                        options, refer to the ffmpeg-imageio docs
+                        FFMPEG config arguments for encoding output videos.
+                        This argument is expected in JSON notation. For a list
+                        of possible options, refer to the ffmpeg-imageio docs.
+                        Default: '{"codec": "libx264"}'.
   --backend {auto,onnxrt,opencv}
-                        Backend for ONNX model execution.
+                        Backend for ONNX model execution. Default: "auto"
+                        (prefer onnxrt if available).
   --version             Print version number and exit.
   --help, -h            Show this help message and exit.
 ```
