@@ -249,7 +249,7 @@ def parse_cli_args():
 
     if args.input == ['cam']:  # Shortcut for webcam demo with live preview
         args.input = ['<video0>']
-        args.enable_preview = True
+        args.preview = True
 
     return args
 
