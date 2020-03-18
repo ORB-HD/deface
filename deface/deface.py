@@ -212,7 +212,7 @@ def parse_cli_args():
         help='Detection threshold (tune this to trade off between false positive and false negative rate). Default: 0.2.')
     parser.add_argument(
         '--scale', '-s', default=None, metavar='WxH',
-        help='Downscale images for network inference to this size (format: WxH, example: --scale=640x360).')
+        help='Downscale images for network inference to this size (format: WxH, example: --scale 640x360).')
     parser.add_argument(
         '--preview', '-p', default=False, action='store_true',
         help='Enable live preview GUI (can decrease performance).')

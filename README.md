@@ -33,7 +33,7 @@ If you want to try out anonymizing a video using the default settings, you just 
 
     $ deface myvideos/vid1.mp4
 
-This will show you a live preview of the output and write the the output video to the new file `myvideos/vid1_anonymized.mp4`.
+This will write the the output to the new video file `myvideos/vid1_anonymized.mp4`.
 
 ### Live capture demo
 
@@ -75,7 +75,7 @@ optional arguments:
   --thresh T, -t T      Detection threshold (tune this to trade off between
                         false positive and false negative rate). Default: 0.2.
   --scale WxH, -s WxH   Downscale images for network inference to this size
-                        (format: WxH, example: --scale=640x360).
+                        (format: WxH, example: --scale 640x360).
   --preview, -p         Enable live preview GUI (can decrease performance).
   --boxes               Use boxes instead of ellipse masks.
   --draw-scores         Draw detection scores onto outputs.
@@ -136,6 +136,19 @@ If you are interested in seeing the faceness score (a score between 0 and 1 that
 <img src="examples/city_anonymized_scores.jpg" width="70%" alt="$ deface examples/city.jpg --draw-scores -o examples/city_anonymized_scores.jpg"/>
 
 This option can be useful to figure out an optimal value for the detection threshold that can then be set through the `--thresh` option.
+
+
+### High-resolution media and performance issues 
+
+Since `deface` tries to detect faces in the unscaled full-res version of input files by default, this can lead to performance issues on high-res inputs (>> 720p). In extreme cases, even detection accuracy can suffer because the detector neural network has not been trained on ultra-high-res images.
+
+To counter these performance issues, `deface` supports downsampling its inputs on-the-fly before detecting faces, and subsequently rescaling detection results to the original resolution. Downsampling only applies to the detection process, whereas the final output resolution remains the same as the input resolution.
+
+This feature is controlled through the `--scale` option, which expects a value of the form `WxH`, where `W` and `H` are the desired width and height of downscaled input representations.
+It is very important to make sure the aspect ratio of the inputs remains intact when using this option, because otherwise, distorted images are fed into the detector, resulting in decreased accuracy.
+
+For example, if your inputs have the common aspect ratio 16:9, you can instruct the detector to run in 360p resolution by specifying `--scale 640x360`.
+If the results at this fairly low resolution are not good enough, detection at 720p input resolution (`--scale 1280x720`) may work better.
 
 
 ## Hardware acceleration
