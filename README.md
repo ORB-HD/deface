@@ -22,7 +22,7 @@ Alternatively, if you want to use the latest (unreleased) revision directly from
 
     $ python3 -m pip install 'git+https://github.com/ORB-HD/deface'
 
-This will only install the dependencies that are strictly required for running the tool. If you want to speed up processing by enabling hardware acceleration, you will need to manually install additional packages, see [Hardware acceleration](##Hardware-acceleration)
+This will only install the dependencies that are strictly required for running the tool. If you want to speed up processing by enabling hardware acceleration, you will need to manually install additional packages, see [Hardware acceleration](#hardware-acceleration)
 
 
 ## Usage
@@ -118,7 +118,7 @@ The detection threshold (`--thresh`, `-t`) is used to define how confident the d
 If you are experiencing too many false positives (i.e. anonymization filters applied at non-face regions) on your own video data, consider increasing the threshold.
 On the other hand, if there are too many false negative errors (visible faces that are not anonymized), lowering the threshold is advisable.
 
-The optimal value can depend on many factors such as video quality, lighting conditions and prevalence of partial occlusions. To optimize this value, you can set threshold to a very low value and then draw detection score overlays, as described in the [section below](###Drawing-detection-score-overlays).
+The optimal value can depend on many factors such as video quality, lighting conditions and prevalence of partial occlusions. To optimize this value, you can set threshold to a very low value and then draw detection score overlays, as described in the [section below](#drawing-detection-score-overlays).
 
 To demonstrate the effects of a threshold that is set too low or too high, see the examples outputs below:
 
