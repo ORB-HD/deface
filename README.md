@@ -112,9 +112,9 @@ By default, each detected face is anonymized by applying a blur filter to an ell
 TODO left: low threshold, right: high threshold
 
 
-### Rendering detection score overlays
+### Drawing detection score overlays
 
-If you are interested in seeing the "faceness" score (a score between 0 and 1 that roughly corresponds to the neural network's confidence that something *is* a face) of each detected face in the input, you can enable the `--draw-scores` option to draw the score of each detection directly above its location.
+If you are interested in seeing the "faceness" score (a score between 0 and 1 that roughly corresponds to the detector's confidence that something *is* a face) of each detected face in the input, you can enable the `--draw-scores` option to draw the score of each detection directly above its location.
 
     $ deface docs/city.jpg --draw-scores -o docs/city_anonymized_scores.jpg
 
@@ -145,9 +145,9 @@ If your machine doesn't have a CUDA-capable GPU but you want to accelerate compu
 
 The included face detection system is based on CenterFace ([code](https://github.com/Star-Clouds/centerface), [paper](https://arxiv.org/abs/1911.03599)), a deep neural network optimized for fast but reliable detection of human faces in photos.
 The network was trained on the [WIDER FACE](http://shuoyang1213.me/WIDERFACE/) dataset, which contains annotated photos showing faces in a wide variety of scales, poses and occlusions.
-Although the face detector is originally intended to be used for normal 2D images, `deface` uses it to detect faces in video data by analyzing each video frame independently.
 
-*(... More detailed documentation will follow soon)*
+Although the face detector is originally intended to be used for normal 2D images, `deface` can also use it to detect faces in video data by analyzing each video frame independently.
+The face bounding boxes predicted by the CenterFace detector are then used as masks to determine where to apply anonymization filters.
 
 
 ## Credits
