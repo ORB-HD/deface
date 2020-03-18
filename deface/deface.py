@@ -206,10 +206,10 @@ def parse_cli_args():
         help=f'File path(s) or camera device name. It is possible to pass multiple paths by separating them by spaces or by using shell expansion (e.g. `$ deface vids/*.mp4`). If a camera is installed, a live webcam demo can be started by running `$ deface cam` (which is a shortcut for `$ deface -p \'<video0>\'`.')
     parser.add_argument(
         '--output', '-o', default=None, metavar='O',
-        help='Output file name (defaults to input path + postfix "_anonymized").')
+        help='Output file name. Defaults to input path + postfix "_anonymized".')
     parser.add_argument(
         '--thresh', '-t', default=0.2, type=float, metavar='T',
-        help='Detection threshold (tune this to trade off between false positive and false negative rate).')
+        help='Detection threshold (tune this to trade off between false positive and false negative rate). Default: 0.2.')
     parser.add_argument(
         '--scale', '-s', default=None, metavar='WxH',
         help='Downscale images for network inference to this size (format: WxH, example: --scale=640x360).')
@@ -224,17 +224,17 @@ def parse_cli_args():
         help='Draw detection scores onto outputs.')
     parser.add_argument(
         '--mask-scale', default=1.3, type=float, metavar='M',
-        help='Scale factor for face masks, to make sure that masks cover the complete face (default: 1.3).)')
+        help='Scale factor for face masks, to make sure that masks cover the complete face. Default: 1.3.')
     parser.add_argument(
         '--replacewith', default='blur', choices=['blur', 'solid', 'none'],
-        help='Anonymization filter mode for face regions. "blur" applies a strong gaussian blurring, "solid" draws a solid black box and "none" does leaves the input unchanged.')
+        help='Anonymization filter mode for face regions. "blur" applies a strong gaussian blurring, "solid" draws a solid black box and "none" does leaves the input unchanged. Default: "blur".')
     parser.add_argument(
         '--ffmpeg-config', default={'codec': 'libx264'}, type=json.loads,
-        help='FFMPEG config arguments for encoding output videos (default: "{\'codec\': \'libx264\'}". This argument is expected in JSON notation. For a list of possible options, refer to the ffmpeg-imageio docs'
+        help='FFMPEG config arguments for encoding output videos. This argument is expected in JSON notation. For a list of possible options, refer to the ffmpeg-imageio docs. Default: "{\'codec\': \'libx264\'}".'
     )  # See https://imageio.readthedocs.io/en/stable/format_ffmpeg.html#parameters-for-saving
     parser.add_argument(
         '--backend', default='auto', choices=['auto', 'onnxrt', 'opencv'],
-        help='Backend for ONNX model execution.')
+        help='Backend for ONNX model execution. Default: "auto" (prefer onnxrt if available).')
     parser.add_argument(
         '--version', action='version', version=__version__,
         help='Print version number and exit.')
