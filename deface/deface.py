@@ -226,8 +226,8 @@ def parse_cli_args():
         '--mask-scale', default=1.3, type=float, metavar='M',
         help='Scale factor for face masks, to make sure that masks cover the complete face (default: 1.3).)')
     parser.add_argument(
-        '--replacewith', default='blur', choices=['solid', 'blur', 'none'],
-        help='Anonymization filter mode for face regions.')
+        '--replacewith', default='blur', choices=['blur', 'solid', 'none'],
+        help='Anonymization filter mode for face regions. "blur" applies a strong gaussian blurring, "solid" draws a solid black box and "none" does leaves the input unchanged.')
     parser.add_argument(
         '--ffmpeg-config', default={'codec': 'libx264'}, type=json.loads,
         help='FFMPEG config arguments for encoding output videos (default: "{\'codec\': \'libx264\'}". This argument is expected in JSON notation. For a list of possible options, refer to the ffmpeg-imageio docs'

@@ -54,7 +54,7 @@ The output may vary depending on your installed version, but it should look simi
 ```
 usage: deface [--output O] [--thresh T] [--scale WxH] [--enable-preview]
               [--enable-boxes] [--draw-scores] [--mask-scale M]
-              [--replacewith {solid,blur,none}]
+              [--replacewith {blur,solid,none}]
               [--ffmpeg-config FFMPEG_CONFIG] [--backend {auto,onnxrt,opencv}]
               [--version] [--help]
               [input [input ...]]
@@ -81,8 +81,11 @@ optional arguments:
   --draw-scores         Draw detection scores onto outputs.
   --mask-scale M        Scale factor for face masks, to make sure that masks
                         cover the complete face (default: 1.3).)
-  --replacewith {solid,blur,none}
-                        Anonymization filter mode for face regions.
+  --replacewith {blur,solid,none}
+                        Anonymization filter mode for face regions. "blur"
+                        applies a strong gaussian blurring, "solid" draws a
+                        solid black box and "none" does leaves the input
+                        unchanged.
   --ffmpeg-config FFMPEG_CONFIG
                         FFMPEG config arguments for encoding output videos
                         (default: "{'codec': 'libx264'}". This argument is
