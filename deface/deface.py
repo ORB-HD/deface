@@ -17,6 +17,7 @@ import cv2
 
 from deface import __version__
 from deface.centerface import CenterFace
+from deface.sort import Sort
 
 
 # TODO: Optionally preserve audio track?
@@ -101,7 +102,8 @@ def video_detect(
         mask_scale: float,
         ellipse: bool,
         draw_scores: bool,
-        ffmpeg_config: Dict[str, str]
+        ffmpeg_config: Dict[str, str],
+        tracking_kwargs: Dict[str, float],
 ):
     try:
         reader: imageio.plugins.ffmpeg.FfmpegFormat.Reader = imageio.get_reader(ipath)
@@ -130,9 +132,16 @@ def video_detect(
             opath, format='FFMPEG', mode='I', fps=meta['fps'], **ffmpeg_config
         )
 
+    if tracking_kwargs is not None:
+        # use SORT BBox tracker from: https://github.com/abewley/sort
+        tracker = Sort(**tracking_kwargs)
+
     for frame in read_iter:
         # Perform network inference, get bb dets but discard landmark predictions
         dets, _ = centerface(frame, threshold=threshold)
+
+        if tracking_kwargs is not None:
+            dets = tracker.update(dets)
 
         anonymize_frame(
             dets, frame, mask_scale=mask_scale,
@@ -233,6 +242,10 @@ def parse_cli_args():
         help='FFMPEG config arguments for encoding output videos. This argument is expected in JSON notation. For a list of possible options, refer to the ffmpeg-imageio docs. Default: \'{"codec": "libx264"}\'.'
     )  # See https://imageio.readthedocs.io/en/stable/format_ffmpeg.html#parameters-for-saving
     parser.add_argument(
+        '--track-config', default=None, type=json.loads,
+        help='SORT arguments for bounding-box detection tracking, or None if tracking should not be used. This argument is expected in JSON notation. For a list of possible options, refer to the original SORT repository. Default: None.'
+    )   # see https://github.com/abewley/sort/blob/master/sort.py#L199
+    parser.add_argument(
         '--backend', default='auto', choices=['auto', 'onnxrt', 'opencv'],
         help='Backend for ONNX model execution. Default: "auto" (prefer onnxrt if available).')
     parser.add_argument(
@@ -268,6 +281,7 @@ def main():
     ffmpeg_config = args.ffmpeg_config
     backend = args.backend
     in_shape = args.scale
+    track_config = args.track_config
     if in_shape is not None:
         w, h = in_shape.split('x')
         in_shape = int(w), int(h)
@@ -306,7 +320,8 @@ def main():
                 draw_scores=draw_scores,
                 enable_preview=enable_preview,
                 nested=multi_file,
-                ffmpeg_config=ffmpeg_config
+                ffmpeg_config=ffmpeg_config,
+                tracking_kwargs=track_config
             )
         elif filetype == 'image':
             image_detect(

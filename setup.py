@@ -27,6 +27,7 @@ setuptools.setup(
         'tqdm',
         'scikit-image',
         'opencv-python',
+        'filterpy',
     ],
     extras_require={
         'gpu':  ['onnxruntime-gpu'],
