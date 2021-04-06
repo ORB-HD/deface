@@ -64,10 +64,12 @@ Video anonymization by face detection
 positional arguments:
   input                 File path(s) or camera device name. It is possible to
                         pass multiple paths by separating them by spaces or by
-                        using shell expansion (e.g. `$ deface vids/*.mp4`). If
-                        a camera is installed, a live webcam demo can be
-                        started by running `$ deface cam` (which is a shortcut
-                        for `$ deface -p '<video0>'`.
+                        using shell expansion (e.g. `$ deface vids/*.mp4`). 
+                        Additionally you can pass a directory as an input in
+                        which case all files in the directory will be used as
+                        input. If a camera is installed, a live webcam demo can 
+                        be started by running `$ deface cam` (which is a 
+                        shortcut for `$ deface -p '<video0>'`).
 
 optional arguments:
   --output O, -o O      Output file name. Defaults to input path + postfix

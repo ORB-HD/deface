@@ -256,7 +256,15 @@ def parse_cli_args():
 
 def main():
     args = parse_cli_args()
-    ipaths = args.input
+    ipaths = []
+
+    # add files in folders
+    for path in args.input:
+        if os.path.isdir(path):
+            for file in os.listdir(path):
+                ipaths.append(os.path.join(path,file))
+        elif os.path.isfile(path):
+            ipaths.append(path)
 
     base_opath = args.output
     replacewith = args.replacewith
