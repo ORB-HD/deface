@@ -180,6 +180,9 @@ def image_detect(
         if cv2.waitKey(0) & 0xFF in [ord('q'), 27]:  # 27 is the escape key code
             cv2.destroyAllWindows()
 
+    if not os.path.exists(os.path.dirname(opath)):
+        os.makedirs(os.path.dirname(opath))
+
     imageio.imsave(opath, frame)
     # print(f'Output saved to {opath}')
 
@@ -304,8 +307,8 @@ def main():
         if opath is None and not enable_preview:
             print('No output file is specified and the preview GUI is disabled. No output will be produced.')
         if opath is not None and multi_file:
-            print('Can\'t handle nested input folders with specified output. No output will be produced')
-            exit(1)
+            for in_arg in args.input:
+                opath = opath + ipath.replace(in_arg,'')
         if filetype == 'video' or is_cam:
             video_detect(
                 ipath=ipath,
