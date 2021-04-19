@@ -73,7 +73,8 @@ positional arguments:
 
 optional arguments:
   --output O, -o O      Output file name. Defaults to input path + postfix
-                        "_anonymized".
+                        "_anonymized". If input is a folder, output should
+                        desired output folder. 
   --thresh T, -t T      Detection threshold (tune this to trade off between
                         false positive and false negative rate). Default: 0.2.
   --scale WxH, -s WxH   Downscale images for network inference to this size

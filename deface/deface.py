@@ -5,6 +5,7 @@ import glob
 import json
 import mimetypes
 import os
+from pathlib import Path
 import sys
 from typing import Dict, Tuple
 
@@ -307,6 +308,9 @@ def main():
         if opath is None and not enable_preview:
             print('No output file is specified and the preview GUI is disabled. No output will be produced.')
         if opath is not None and multi_file:
+            if Path(opath).suffix != '':
+                print('Output argument cannot be file when input is folder. No output will be produced')
+                exit(1)
             for in_arg in args.input:
                 opath = opath + ipath.replace(in_arg,'')
         if filetype == 'video' or is_cam:
