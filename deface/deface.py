@@ -308,7 +308,9 @@ def main():
         if opath is None and not enable_preview:
             print('No output file is specified and the preview GUI is disabled. No output will be produced.')
         if opath is not None and multi_file:
-            if Path(opath).suffix != '':
+            input_contains_folders = len(
+                [folder for folder in args.input if os.path.isdir(folder)]) > 0
+            if Path(opath).suffix != '' and input_contains_folders:
                 print('Output argument cannot be file when input is folder. No output will be produced')
                 exit(1)
             for in_arg in args.input:
