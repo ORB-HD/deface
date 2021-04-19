@@ -303,6 +303,9 @@ def main():
         print(f'Input:  {ipath}\nOutput: {opath}')
         if opath is None and not enable_preview:
             print('No output file is specified and the preview GUI is disabled. No output will be produced.')
+        if opath is not None and multi_file:
+            print('Can\'t handle nested input folders with specified output. No output will be produced')
+            exit(1)
         if filetype == 'video' or is_cam:
             video_detect(
                 ipath=ipath,
