@@ -265,10 +265,9 @@ def main():
     # add files in folders
     for path in args.input:
         if os.path.isdir(path):
-            for file in os.listdir(path):
-                # add recursively
-                ipaths.extend([os.path.join(dp, f) for dp, dn, filenames in os.walk(
-                    path) for f in filenames])
+            # add recursively
+            ipaths.extend([os.path.join(dp, f) for dp, dn, filenames in os.walk(
+                path) for f in filenames])
         elif os.path.isfile(path):
             ipaths.append(path)
 
