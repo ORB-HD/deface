@@ -42,15 +42,17 @@ def draw_det(
     if replacewith == 'solid':
         cv2.rectangle(frame, (x1, y1), (x2, y2), ovcolor, -1)
     elif replacewith == 'blur':
-        bf = 2  # blur factor (number of pixels in each dimension that the face will be reduced to)
-        blurred_box =  cv2.blur(
+        # blur factor (number of pixels in each dimension that the face will be reduced to)
+        bf = 2
+        blurred_box = cv2.blur(
             frame[y1:y2, x1:x2],
             (abs(x2 - x1) // bf, abs(y2 - y1) // bf)
         )
         if ellipse:
             roibox = frame[y1:y2, x1:x2]
             # Get y and x coordinate lists of the "bounding ellipse"
-            ey, ex = skimage.draw.ellipse((y2 - y1) // 2, (x2 - x1) // 2, (y2 - y1) // 2, (x2 - x1) // 2)
+            ey, ex = skimage.draw.ellipse(
+                (y2 - y1) // 2, (x2 - x1) // 2, (y2 - y1) // 2, (x2 - x1) // 2)
             roibox[ey, ex] = blurred_box[ey, ex]
             frame[y1:y2, x1:x2] = roibox
         else:
@@ -104,14 +106,17 @@ def video_detect(
         ffmpeg_config: Dict[str, str]
 ):
     try:
-        reader: imageio.plugins.ffmpeg.FfmpegFormat.Reader = imageio.get_reader(ipath)
+        reader: imageio.plugins.ffmpeg.FfmpegFormat.Reader = imageio.get_reader(
+            ipath)
         meta = reader.get_meta_data()
         _ = meta['size']
     except:
         if cam:
-            print(f'Could not find video device {ipath}. Please set a valid input.')
+            print(
+                f'Could not find video device {ipath}. Please set a valid input.')
         else:
-            print(f'Could not open file {ipath} as a video file with imageio. Skipping file...')
+            print(
+                f'Could not open file {ipath} as a video file with imageio. Skipping file...')
         return
 
     if cam:
@@ -121,7 +126,8 @@ def video_detect(
         read_iter = reader.iter_data()
         nframes = reader.count_frames()
     if nested:
-        bar = tqdm.tqdm(dynamic_ncols=True, total=nframes, position=1, leave=True)
+        bar = tqdm.tqdm(dynamic_ncols=True, total=nframes,
+                        position=1, leave=True)
     else:
         bar = tqdm.tqdm(dynamic_ncols=True, total=nframes)
 
@@ -143,8 +149,10 @@ def video_detect(
             writer.append_data(frame)
 
         if enable_preview:
-            cv2.imshow('Preview of anonymization results (quit by pressing Q or Escape)', frame[:, :, ::-1])  # RGB -> RGB
-            if cv2.waitKey(1) & 0xFF in [ord('q'), 27]:  # 27 is the escape key code
+            cv2.imshow('Preview of anonymization results (quit by pressing Q or Escape)',
+                       frame[:, :, ::-1])  # RGB -> RGB
+            # 27 is the escape key code
+            if cv2.waitKey(1) & 0xFF in [ord('q'), 27]:
                 cv2.destroyAllWindows()
                 break
         bar.update()
@@ -176,9 +184,14 @@ def image_detect(
     )
 
     if enable_preview:
-        cv2.imshow('Preview of anonymization results (quit by pressing Q or Escape)', frame[:, :, ::-1])  # RGB -> RGB
+        cv2.imshow('Preview of anonymization results (quit by pressing Q or Escape)',
+                   frame[:, :, ::-1])  # RGB -> RGB
         if cv2.waitKey(0) & 0xFF in [ord('q'), 27]:  # 27 is the escape key code
             cv2.destroyAllWindows()
+
+    dir_path = os.path.dirname(os.path.realpath(opath))
+    if not os.path.exists(dir_path):
+        os.makedirs(dir_path)
 
     imageio.imsave(opath, frame)
     # print(f'Output saved to {opath}')
@@ -223,7 +236,8 @@ def get_anonymized_image(frame,
 
 
 def parse_cli_args():
-    parser = argparse.ArgumentParser(description='Video anonymization by face detection', add_help=False)
+    parser = argparse.ArgumentParser(
+        description='Video anonymization by face detection', add_help=False)
     parser.add_argument(
         'input', nargs='*',
         help=f'File path(s) or camera device name. It is possible to pass multiple paths by separating them by spaces or by using shell expansion (e.g. `$ deface vids/*.mp4`). If a camera is installed, a live webcam demo can be started by running `$ deface cam` (which is a shortcut for `$ deface -p \'<video0>\'`.')
@@ -261,7 +275,8 @@ def parse_cli_args():
     parser.add_argument(
         '--version', action='version', version=__version__,
         help='Print version number and exit.')
-    parser.add_argument('--help', '-h', action='help', help='Show this help message and exit.')
+    parser.add_argument('--help', '-h', action='help',
+                        help='Show this help message and exit.')
 
     args = parser.parse_args()
 
@@ -284,8 +299,8 @@ def main():
     # add files in folders
     for path in args.input:
         if os.path.isdir(path):
-            for file in os.listdir(path):
-                ipaths.append(os.path.join(path,file))
+            ipaths.extend([os.path.join(dp, f) for dp, dn, filenames in os.walk(
+                path) for f in filenames])
         elif os.path.isfile(path):
             ipaths.append(path)
 
@@ -303,13 +318,13 @@ def main():
         w, h = in_shape.split('x')
         in_shape = int(w), int(h)
 
-
     # TODO: scalar downscaling setting (-> in_shape), preserving aspect ratio
     centerface = CenterFace(in_shape=in_shape, backend=backend)
 
     multi_file = len(ipaths) > 1
     if multi_file:
-        ipaths = tqdm.tqdm(ipaths, position=0, dynamic_ncols=True, desc='Batch progress')
+        ipaths = tqdm.tqdm(ipaths, position=0,
+                           dynamic_ncols=True, desc='Batch progress')
 
     for ipath in ipaths:
         opath = base_opath
@@ -318,12 +333,28 @@ def main():
             enable_preview = True
         filetype = get_file_type(ipath)
         is_cam = filetype == 'cam'
+        if multi_file:
+            input_contains_folders = len(
+                [folder for folder in args.input if os.path.isdir(folder)]) > 0
+            if input_contains_folders and base_opath == None:
+                print(
+                    'Output cannot be None when input is set to folder. No output will be produced.')
+                break
+            elif input_contains_folders and os.path.isfile(opath):
+                print(
+                    'Output cannot be a file when input is set to folder. No output will be produced.')
+                break
+            elif input_contains_folders and os.path.isdir(opath):
+                for in_arg in args.input:
+                    opath = opath + ipath.replace(in_arg, '')
         if opath is None and not is_cam:
             root, ext = os.path.splitext(ipath)
             opath = f'{root}_anonymized{ext}'
-        print(f'Input:  {ipath}\nOutput: {opath}')
         if opath is None and not enable_preview:
-            print('No output file is specified and the preview GUI is disabled. No output will be produced.')
+            print(
+                'No output file is specified and the preview GUI is disabled. No output will be produced.')
+            break
+        print(f'Input:  {ipath}\nOutput: {opath}')
         if filetype == 'video' or is_cam:
             video_detect(
                 ipath=ipath,
