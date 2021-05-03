@@ -199,6 +199,29 @@ def get_file_type(path):
     return mime
 
 
+def get_anonymized_image(frame,
+                         threshold: float,
+                         replacewith: str,
+                         mask_scale: float,
+                         ellipse: bool,
+                         draw_scores: bool,
+                         ):
+    """
+    Method for getting an anonymized image without CLI
+    returns frame
+    """
+
+    centerface = CenterFace(in_shape=None, backend='auto')
+    dets, _ = centerface(frame, threshold=threshold)
+
+    anonymize_frame(
+        dets, frame, mask_scale=mask_scale,
+        replacewith=replacewith, ellipse=ellipse, draw_scores=draw_scores
+    )
+
+    return frame
+
+
 def parse_cli_args():
     parser = argparse.ArgumentParser(description='Video anonymization by face detection', add_help=False)
     parser.add_argument(
