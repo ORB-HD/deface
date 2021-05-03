@@ -93,6 +93,11 @@ optional arguments:
                         This argument is expected in JSON notation. For a list
                         of possible options, refer to the ffmpeg-imageio docs.
                         Default: '{"codec": "libx264"}'.
+  --track-config        SORT arguments for bounding-box detection tracking, or 
+                        None if tracking should not be used.
+                        This argument is expected in JSON notation. For a list
+                        of possible options, refer to the original SORT repository.
+                        Default: None.
   --backend {auto,onnxrt,opencv}
                         Backend for ONNX model execution. Default: "auto"
                         (prefer onnxrt if available).
