@@ -37,7 +37,8 @@ def draw_det(
         replacewith: str = 'blur',
         ellipse: bool = True,
         draw_scores: bool = False,
-        ovcolor: Tuple[int] = (0, 0, 0)
+        ovcolor: Tuple[int] = (0, 0, 0),
+        replaceimg = None
 ):
     if replacewith == 'solid':
         cv2.rectangle(frame, (x1, y1), (x2, y2), ovcolor, -1)
@@ -55,6 +56,13 @@ def draw_det(
             frame[y1:y2, x1:x2] = roibox
         else:
             frame[y1:y2, x1:x2] = blurred_box
+    elif replacewith == "img":
+        target_size = (x2-x1, y2-y1)
+        resized_replaceimg = cv2.resize(replaceimg, target_size)
+        if replaceimg.shape[2] == 3:
+            frame[y1:y2, x1:x2] = resized_replaceimg
+        elif replaceimg.shape[2] == 4:
+            frame[y1:y2, x1:x2] = frame[y1:y2, x1:x2] * (1 - resized_replaceimg[:, :, 3:] / 255) + resized_replaceimg[:, :, :3] * (resized_replaceimg[:, :, 3:] / 255)
     elif replacewith == 'none':
         pass
     if draw_scores:
@@ -66,7 +74,7 @@ def draw_det(
 
 def anonymize_frame(
         dets, frame, mask_scale,
-        replacewith, ellipse, draw_scores
+        replacewith, ellipse, draw_scores, replaceimg
 ):
     for i, det in enumerate(dets):
         boxes, score = det[:4], det[4]
@@ -81,6 +89,7 @@ def anonymize_frame(
             replacewith=replacewith,
             ellipse=ellipse,
             draw_scores=draw_scores,
+            replaceimg=replaceimg
         )
 
 
@@ -101,7 +110,8 @@ def video_detect(
         mask_scale: float,
         ellipse: bool,
         draw_scores: bool,
-        ffmpeg_config: Dict[str, str]
+        ffmpeg_config: Dict[str, str],
+        replaceimg = None
 ):
     try:
         reader: imageio.plugins.ffmpeg.FfmpegFormat.Reader = imageio.get_reader(ipath)
@@ -136,7 +146,8 @@ def video_detect(
 
         anonymize_frame(
             dets, frame, mask_scale=mask_scale,
-            replacewith=replacewith, ellipse=ellipse, draw_scores=draw_scores
+            replacewith=replacewith, ellipse=ellipse, draw_scores=draw_scores,
+            replaceimg=replaceimg
         )
 
         if opath is not None:
@@ -163,7 +174,8 @@ def image_detect(
         mask_scale: float,
         ellipse: bool,
         draw_scores: bool,
-        enable_preview: bool
+        enable_preview: bool,
+        replaceimg = None
 ):
     frame = imageio.imread(ipath)
 
@@ -172,7 +184,8 @@ def image_detect(
 
     anonymize_frame(
         dets, frame, mask_scale=mask_scale,
-        replacewith=replacewith, ellipse=ellipse, draw_scores=draw_scores
+        replacewith=replacewith, ellipse=ellipse, draw_scores=draw_scores,
+        replaceimg=replaceimg
     )
 
     if enable_preview:
@@ -205,6 +218,7 @@ def get_anonymized_image(frame,
                          mask_scale: float,
                          ellipse: bool,
                          draw_scores: bool,
+                         replaceimg = None
                          ):
     """
     Method for getting an anonymized image without CLI
@@ -216,7 +230,8 @@ def get_anonymized_image(frame,
 
     anonymize_frame(
         dets, frame, mask_scale=mask_scale,
-        replacewith=replacewith, ellipse=ellipse, draw_scores=draw_scores
+        replacewith=replacewith, ellipse=ellipse, draw_scores=draw_scores,
+        replaceimg=replaceimg
     )
 
     return frame
@@ -249,8 +264,11 @@ def parse_cli_args():
         '--mask-scale', default=1.3, type=float, metavar='M',
         help='Scale factor for face masks, to make sure that masks cover the complete face. Default: 1.3.')
     parser.add_argument(
-        '--replacewith', default='blur', choices=['blur', 'solid', 'none'],
-        help='Anonymization filter mode for face regions. "blur" applies a strong gaussian blurring, "solid" draws a solid black box and "none" does leaves the input unchanged. Default: "blur".')
+        '--replacewith', default='blur', choices=['blur', 'solid', 'none', 'img'],
+        help='Anonymization filter mode for face regions. "blur" applies a strong gaussian blurring, "solid" draws a solid black box, "none" does leaves the input unchanged and "img" replace the face with a custom image. Default: "blur".')
+    parser.add_argument(
+        '--replaceimg', default='replace_img.png',
+        help='Anonymization img for face regions. Requires --replacewith img option.')
     parser.add_argument(
         '--ffmpeg-config', default={"codec": "libx264"}, type=json.loads,
         help='FFMPEG config arguments for encoding output videos. This argument is expected in JSON notation. For a list of possible options, refer to the ffmpeg-imageio docs. Default: \'{"codec": "libx264"}\'.'
@@ -299,9 +317,13 @@ def main():
     ffmpeg_config = args.ffmpeg_config
     backend = args.backend
     in_shape = args.scale
+    replaceimg = None
     if in_shape is not None:
         w, h = in_shape.split('x')
         in_shape = int(w), int(h)
+    if replacewith == "img":
+        replaceimg = imageio.imread(args.replaceimg)
+        print(f'After opening {args.replaceimg} shape: {replaceimg.shape}')
 
 
     # TODO: scalar downscaling setting (-> in_shape), preserving aspect ratio
@@ -337,7 +359,8 @@ def main():
                 draw_scores=draw_scores,
                 enable_preview=enable_preview,
                 nested=multi_file,
-                ffmpeg_config=ffmpeg_config
+                ffmpeg_config=ffmpeg_config,
+                replaceimg=replaceimg
             )
         elif filetype == 'image':
             image_detect(
@@ -349,7 +372,8 @@ def main():
                 mask_scale=mask_scale,
                 ellipse=ellipse,
                 draw_scores=draw_scores,
-                enable_preview=enable_preview
+                enable_preview=enable_preview,
+                replaceimg=replaceimg
             )
         elif filetype is None:
             print(f'Can\'t determine file type of file {ipath}. Skipping...')
