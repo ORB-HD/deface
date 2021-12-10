@@ -54,22 +54,22 @@ The output may vary depending on your installed version, but it should look simi
 ```
 usage: deface [--output O] [--thresh T] [--scale WxH] [--preview] [--boxes]
               [--draw-scores] [--mask-scale M]
-              [--replacewith {blur,solid,none}]
+              [--replacewith {blur,solid,none,img}] [--replaceimg REPLACEIMG]
               [--ffmpeg-config FFMPEG_CONFIG] [--backend {auto,onnxrt,opencv}]
               [--version] [--help]
-              [input [input ...]]
+              [input ...]
 
 Video anonymization by face detection
 
 positional arguments:
   input                 File path(s) or camera device name. It is possible to
                         pass multiple paths by separating them by spaces or by
-                        using shell expansion (e.g. `$ deface vids/*.mp4`). 
-                        Additionally you can pass a directory as an input in
-                        which case all files in the directory will be used as
-                        input. If a camera is installed, a live webcam demo can 
-                        be started by running `$ deface cam` (which is a 
-                        shortcut for `$ deface -p '<video0>'`).
+                        using shell expansion (e.g. `$ deface vids/*.mp4`).
+                        Alternatively, you can pass a directory as an input,
+                        in which case all files in the directory will be used
+                        as inputs. If a camera is installed, a live webcam
+                        demo can be started by running `$ deface cam` (which
+                        is a shortcut for `$ deface -p '<video0>'`.
 
 optional arguments:
   --output O, -o O      Output file name. Defaults to input path + postfix
@@ -83,11 +83,15 @@ optional arguments:
   --draw-scores         Draw detection scores onto outputs.
   --mask-scale M        Scale factor for face masks, to make sure that masks
                         cover the complete face. Default: 1.3.
-  --replacewith {blur,solid,none}
+  --replacewith {blur,solid,none,img}
                         Anonymization filter mode for face regions. "blur"
                         applies a strong gaussian blurring, "solid" draws a
-                        solid black box and "none" does leaves the input
-                        unchanged. Default: "blur".
+                        solid black box, "none" does leaves the input
+                        unchanged and "img" replaces the face with a custom
+                        image. Default: "blur".
+  --replaceimg REPLACEIMG
+                        Anonymization image for face regions. Requires
+                        --replacewith img option.
   --ffmpeg-config FFMPEG_CONFIG
                         FFMPEG config arguments for encoding output videos.
                         This argument is expected in JSON notation. For a list

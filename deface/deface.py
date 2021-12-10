@@ -56,12 +56,12 @@ def draw_det(
             frame[y1:y2, x1:x2] = roibox
         else:
             frame[y1:y2, x1:x2] = blurred_box
-    elif replacewith == "img":
-        target_size = (x2-x1, y2-y1)
+    elif replacewith == 'img':
+        target_size = (x2 - x1, y2 - y1)
         resized_replaceimg = cv2.resize(replaceimg, target_size)
-        if replaceimg.shape[2] == 3:
+        if replaceimg.shape[2] == 3:  # RGB
             frame[y1:y2, x1:x2] = resized_replaceimg
-        elif replaceimg.shape[2] == 4:
+        elif replaceimg.shape[2] == 4:  # RGBA
             frame[y1:y2, x1:x2] = frame[y1:y2, x1:x2] * (1 - resized_replaceimg[:, :, 3:] / 255) + resized_replaceimg[:, :, :3] * (resized_replaceimg[:, :, 3:] / 255)
     elif replacewith == 'none':
         pass
@@ -241,7 +241,7 @@ def parse_cli_args():
     parser = argparse.ArgumentParser(description='Video anonymization by face detection', add_help=False)
     parser.add_argument(
         'input', nargs='*',
-        help=f'File path(s) or camera device name. It is possible to pass multiple paths by separating them by spaces or by using shell expansion (e.g. `$ deface vids/*.mp4`). If a camera is installed, a live webcam demo can be started by running `$ deface cam` (which is a shortcut for `$ deface -p \'<video0>\'`.')
+        help=f'File path(s) or camera device name. It is possible to pass multiple paths by separating them by spaces or by using shell expansion (e.g. `$ deface vids/*.mp4`). Alternatively, you can pass a directory as an input, in which case all files in the directory will be used as inputs. If a camera is installed, a live webcam demo can be started by running `$ deface cam` (which is a shortcut for `$ deface -p \'<video0>\'`.')
     parser.add_argument(
         '--output', '-o', default=None, metavar='O',
         help='Output file name. Defaults to input path + postfix "_anonymized".')
@@ -265,10 +265,10 @@ def parse_cli_args():
         help='Scale factor for face masks, to make sure that masks cover the complete face. Default: 1.3.')
     parser.add_argument(
         '--replacewith', default='blur', choices=['blur', 'solid', 'none', 'img'],
-        help='Anonymization filter mode for face regions. "blur" applies a strong gaussian blurring, "solid" draws a solid black box, "none" does leaves the input unchanged and "img" replace the face with a custom image. Default: "blur".')
+        help='Anonymization filter mode for face regions. "blur" applies a strong gaussian blurring, "solid" draws a solid black box, "none" does leaves the input unchanged and "img" replaces the face with a custom image. Default: "blur".')
     parser.add_argument(
         '--replaceimg', default='replace_img.png',
-        help='Anonymization img for face regions. Requires --replacewith img option.')
+        help='Anonymization image for face regions. Requires --replacewith img option.')
     parser.add_argument(
         '--ffmpeg-config', default={"codec": "libx264"}, type=json.loads,
         help='FFMPEG config arguments for encoding output videos. This argument is expected in JSON notation. For a list of possible options, refer to the ffmpeg-imageio docs. Default: \'{"codec": "libx264"}\'.'
