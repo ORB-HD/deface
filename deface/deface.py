@@ -304,7 +304,9 @@ def main():
         if os.path.isdir(path):
             for file in os.listdir(path):
                 ipaths.append(os.path.join(path,file))
-        elif os.path.isfile(path):
+        else:
+            # Either a path to a regular file, the special 'cam' shortcut
+            # or an invalid path. The latter two cases are handled below.
             ipaths.append(path)
 
     base_opath = args.output
