@@ -41,7 +41,7 @@ class CenterFace:
 
             static_model = onnx.load(onnx_path)
             dyn_model = self.dynamicize_shapes(static_model)
-            self.sess = onnxruntime.InferenceSession(dyn_model.SerializeToString())
+            self.sess = onnxruntime.InferenceSession(dyn_model.SerializeToString(), providers=['CUDAExecutionProvider', 'CPUExecutionProvider'])
 
             preferred_provider = self.sess.get_providers()[0]
             preferred_device = 'GPU' if preferred_provider.startswith('CUDA') else 'CPU'
