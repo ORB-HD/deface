@@ -136,8 +136,12 @@ def video_detect(
         bar = tqdm.tqdm(dynamic_ncols=True, total=nframes)
 
     if opath is not None:
+        _ffmpeg_config = ffmpeg_config.copy()
+        if not 'fps' in _ffmpeg_config:
+            #  If fps is not explicitly set in ffmpeg_config, use source video fps value
+            _ffmpeg_config['fps'] = meta['fps']
         writer: imageio.plugins.ffmpeg.FfmpegFormat.Writer = imageio.get_writer(
-            opath, format='FFMPEG', mode='I', fps=meta['fps'], **ffmpeg_config
+            opath, format='FFMPEG', mode='I', **_ffmpeg_config
         )
 
     for frame in read_iter:
