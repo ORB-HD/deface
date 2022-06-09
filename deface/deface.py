@@ -120,7 +120,6 @@ def video_detect(
             reader: imageio.plugins.ffmpeg.FfmpegFormat.Reader = imageio.get_reader(ipath)
 
         meta = reader.get_meta_data()
-        print(meta)
         _ = meta['size']
     except:
         if cam:
