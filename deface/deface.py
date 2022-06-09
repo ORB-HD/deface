@@ -114,8 +114,13 @@ def video_detect(
         replaceimg = None
 ):
     try:
-        reader: imageio.plugins.ffmpeg.FfmpegFormat.Reader = imageio.get_reader(ipath)
+        if 'fps' in ffmpeg_config:
+            reader: imageio.plugins.ffmpeg.FfmpegFormat.Reader = imageio.get_reader(ipath, fps=ffmpeg_config['fps'])
+        else:
+            reader: imageio.plugins.ffmpeg.FfmpegFormat.Reader = imageio.get_reader(ipath)
+
         meta = reader.get_meta_data()
+        print(meta)
         _ = meta['size']
     except:
         if cam:
