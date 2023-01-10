@@ -101,7 +101,7 @@ def cam_read_iter(reader):
 def video_detect(
         ipath: str,
         opath: str,
-        centerface: str,
+        centerface: CenterFace,
         threshold: float,
         enable_preview: bool,
         cam: bool,
@@ -172,7 +172,7 @@ def video_detect(
 def image_detect(
         ipath: str,
         opath: str,
-        centerface: str,
+        centerface: CenterFace,
         threshold: float,
         replacewith: str,
         mask_scale: float,
