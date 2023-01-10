@@ -9,6 +9,15 @@ import cv2
 default_onnx_path = f'{os.path.dirname(__file__)}/centerface.onnx'
 
 
+def ensure_rgb(img: np.ndarray) -> np.ndarray:
+    """Convert input image to RGB if it is in RGBA or L format"""
+    if img.ndim == 2:  # 1-channel grayscale -> RGB
+        img = cv2.cvtColor(img, cv2.COLOR_GRAY2RGB)
+    elif img.shape[2] == 4:  # 4-channel RGBA -> RGB
+        img = cv2.cvtColor(img, cv2.COLOR_RGBA2RGB)
+    return img
+
+
 class CenterFace:
     def __init__(self, onnx_path=None, in_shape=None, backend='auto'):
         self.in_shape = in_shape
@@ -71,6 +80,7 @@ class CenterFace:
         return dyn_model
 
     def __call__(self, img, threshold=0.5):
+        img = ensure_rgb(img)
         self.orig_shape = img.shape[:2]
         if self.in_shape is None:
             self.in_shape = self.orig_shape[::-1]
