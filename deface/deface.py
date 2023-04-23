@@ -111,7 +111,8 @@ def video_detect(
         ellipse: bool,
         draw_scores: bool,
         ffmpeg_config: Dict[str, str],
-        replaceimg = None
+        replaceimg = None,
+        keep_audio: bool = False,
 ):
     try:
         if 'fps' in ffmpeg_config:
@@ -141,9 +142,11 @@ def video_detect(
 
     if opath is not None:
         _ffmpeg_config = ffmpeg_config.copy()
-        if not 'fps' in _ffmpeg_config:
-            #  If fps is not explicitly set in ffmpeg_config, use source video fps value
-            _ffmpeg_config['fps'] = meta['fps']
+        #  If fps is not explicitly set in ffmpeg_config, use source video fps value
+        _ffmpeg_config.setdefault('fps', meta['fps'])
+        if keep_audio:  # Carry over audio from input path, use "copy" codec (no transcoding) by default
+            _ffmpeg_config.setdefault('audio_path', ipath)
+            _ffmpeg_config.setdefault('audio_codec', 'copy')
         writer: imageio.plugins.ffmpeg.FfmpegFormat.Writer = imageio.get_writer(
             opath, format='FFMPEG', mode='I', **_ffmpeg_config
         )
@@ -278,6 +281,9 @@ def parse_cli_args():
         '--replaceimg', default='replace_img.png',
         help='Anonymization image for face regions. Requires --replacewith img option.')
     parser.add_argument(
+        '--keep-audio', '-k', default=False, action='store_true',
+        help='Keep audio from video source file and copy it over to the output (only applies to videos).')
+    parser.add_argument(
         '--ffmpeg-config', default={"codec": "libx264"}, type=json.loads,
         help='FFMPEG config arguments for encoding output videos. This argument is expected in JSON notation. For a list of possible options, refer to the ffmpeg-imageio docs. Default: \'{"codec": "libx264"}\'.'
     )  # See https://imageio.readthedocs.io/en/stable/format_ffmpeg.html#parameters-for-saving
@@ -324,6 +330,7 @@ def main():
     threshold = args.thresh
     ellipse = not args.boxes
     mask_scale = args.mask_scale
+    keep_audio = args.keep_audio
     ffmpeg_config = args.ffmpeg_config
     backend = args.backend
     in_shape = args.scale
@@ -369,6 +376,7 @@ def main():
                 draw_scores=draw_scores,
                 enable_preview=enable_preview,
                 nested=multi_file,
+                keep_audio=keep_audio,
                 ffmpeg_config=ffmpeg_config,
                 replaceimg=replaceimg
             )

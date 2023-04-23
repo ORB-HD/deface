@@ -21,8 +21,8 @@ setuptools.setup(
     package_data={'deface': ['centerface.onnx']},
     include_package_data=True,
     install_requires=[
-        'imageio',
-        'imageio-ffmpeg',
+        'imageio>=2.25',
+        'imageio-ffmpeg>=0.4.6',
         'numpy',
         'tqdm',
         'scikit-image',

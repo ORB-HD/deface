@@ -55,8 +55,8 @@ The output may vary depending on your installed version, but it should look simi
 usage: deface [--output O] [--thresh T] [--scale WxH] [--preview] [--boxes]
               [--draw-scores] [--mask-scale M]
               [--replacewith {blur,solid,none,img}] [--replaceimg REPLACEIMG]
-              [--ffmpeg-config FFMPEG_CONFIG] [--backend {auto,onnxrt,opencv}]
-              [--version] [--help]
+              [--keep-audio] [--ffmpeg-config FFMPEG_CONFIG]
+              [--backend {auto,onnxrt,opencv}] [--version] [--help]
               [input ...]
 
 Video anonymization by face detection
@@ -92,6 +92,8 @@ optional arguments:
   --replaceimg REPLACEIMG
                         Anonymization image for face regions. Requires
                         --replacewith img option.
+  --keep-audio, -k      Keep audio from video source file and copy it over to
+                        the output (only applies to videos).
   --ffmpeg-config FFMPEG_CONFIG
                         FFMPEG config arguments for encoding output videos.
                         This argument is expected in JSON notation. For a list
@@ -144,7 +146,7 @@ If you are interested in seeing the faceness score (a score between 0 and 1 that
 This option can be useful to figure out an optimal value for the detection threshold that can then be set through the `--thresh` option.
 
 
-### High-resolution media and performance issues 
+### High-resolution media and performance issues
 
 Since `deface` tries to detect faces in the unscaled full-res version of input files by default, this can lead to performance issues on high-res inputs (>> 720p). In extreme cases, even detection accuracy can suffer because the detector neural network has not been trained on ultra-high-res images.
 
