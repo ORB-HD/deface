@@ -16,6 +16,7 @@ import imageio.plugins.ffmpeg
 import cv2
 
 from deface import __version__
+# __version__ = 'a'
 from deface.centerface import CenterFace
 
 

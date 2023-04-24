@@ -1,3 +1,0 @@
-include versioneer.py
-include deface/_version.py
-include deface/centerface.onnx
