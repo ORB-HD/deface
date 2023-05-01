@@ -1,4 +1,4 @@
-![PyPI](https://img.shields.io/pypi/v/deface) ![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/ORB-HD/deface/python-publish.yml)
+[![PyPI](https://img.shields.io/pypi/v/deface)](https://pypi.org/project/deface/) [![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/ORB-HD/deface/python-publish.yml)](https://github.com/ORB-HD/deface/actions)
 
 # `deface`: Video anonymization by face detection
 
