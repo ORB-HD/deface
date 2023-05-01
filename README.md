@@ -2,7 +2,7 @@
 
 `deface` is a simple command-line tool for automatic anonymization of faces in videos or photos.
 It works by first detecting all human faces in each video frame and then applying an anonymization filter (blurring or black boxes) on each detected face region.
-All audio tracks are discarded as well.
+By default all audio tracks are discarded as well.
 
 
 Original frame | `deface` output (using default options)
