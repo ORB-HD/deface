@@ -1,3 +1,5 @@
+![PyPI](https://img.shields.io/pypi/v/deface) ![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/ORB-HD/deface/python-publish.yml)
+
 # `deface`: Video anonymization by face detection
 
 `deface` is a simple command-line tool for automatic anonymization of faces in videos or photos.
