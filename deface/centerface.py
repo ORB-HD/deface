@@ -19,7 +19,7 @@ def ensure_rgb(img: np.ndarray) -> np.ndarray:
 
 
 class CenterFace:
-    def __init__(self, onnx_path=None, in_shape=None, backend='auto'):
+    def __init__(self, onnx_path=None, in_shape=None, backend='auto', override_execution_provider=None):
         self.in_shape = in_shape
         self.onnx_input_name = 'input.1'
         self.onnx_output_names = ['537', '538', '539', '540']
@@ -50,11 +50,24 @@ class CenterFace:
 
             static_model = onnx.load(onnx_path)
             dyn_model = self.dynamicize_shapes(static_model)
-            self.sess = onnxruntime.InferenceSession(dyn_model.SerializeToString(), providers=['CUDAExecutionProvider', 'CPUExecutionProvider'])
+
+            # onnxruntime.get_available_providers() Returns a list of all
+            #  available providers in a reasonable ordering (GPU providers
+            #  first, then accelerated CPU providers like OpenVINO, then
+            #  CPUExecutionProvider as the last choice).
+            #  In normal conditions, overriding this choice won't be necessary.
+            available_providers = onnxruntime.get_available_providers()
+            if override_execution_provider is None:
+                ort_providers = available_providers
+            else:
+                if override_execution_provider not in available_providers:
+                    raise ValueError(f'{override_execution_provider=} not found. Available providers are: {available_providers}')
+                ort_providers = [override_execution_provider]
+
+            self.sess = onnxruntime.InferenceSession(dyn_model.SerializeToString(), providers=ort_providers)
 
             preferred_provider = self.sess.get_providers()[0]
-            preferred_device = 'GPU' if preferred_provider.startswith('CUDA') else 'CPU'
-            # print(f'Running on {preferred_device}.')
+            print(f'Running on {preferred_provider}.')
 
     @staticmethod
     def dynamicize_shapes(static_model):

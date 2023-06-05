@@ -1,11 +1,9 @@
 #!/usr/bin/env python3
 
 import argparse
-import glob
 import json
 import mimetypes
 import os
-import sys
 from typing import Dict, Tuple
 
 import tqdm
@@ -16,11 +14,7 @@ import imageio.plugins.ffmpeg
 import cv2
 
 from deface import __version__
-# __version__ = 'a'
 from deface.centerface import CenterFace
-
-
-# TODO: Optionally preserve audio track?
 
 
 def scale_bb(x1, y1, x2, y2, mask_scale=1.0):
@@ -292,6 +286,9 @@ def parse_cli_args():
         '--backend', default='auto', choices=['auto', 'onnxrt', 'opencv'],
         help='Backend for ONNX model execution. Default: "auto" (prefer onnxrt if available).')
     parser.add_argument(
+        '--execution-provider', '--ep', default=None, metavar='EP',
+        help='Override onnxrt execution provider (see https://onnxruntime.ai/docs/execution-providers/). If not specified, the presumably fastest available one will be automatically selected. Only used if backend is onnxrt.')
+    parser.add_argument(
         '--version', action='version', version=__version__,
         help='Print version number and exit.')
     parser.add_argument('--help', '-h', action='help', help='Show this help message and exit.')
@@ -335,6 +332,7 @@ def main():
     ffmpeg_config = args.ffmpeg_config
     backend = args.backend
     in_shape = args.scale
+    execution_provider = args.execution_provider
     replaceimg = None
     if in_shape is not None:
         w, h = in_shape.split('x')
@@ -345,7 +343,7 @@ def main():
 
 
     # TODO: scalar downscaling setting (-> in_shape), preserving aspect ratio
-    centerface = CenterFace(in_shape=in_shape, backend=backend)
+    centerface = CenterFace(in_shape=in_shape, backend=backend, override_execution_provider=execution_provider)
 
     multi_file = len(ipaths) > 1
     if multi_file:

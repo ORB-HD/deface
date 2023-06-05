@@ -104,6 +104,12 @@ optional arguments:
   --backend {auto,onnxrt,opencv}
                         Backend for ONNX model execution. Default: "auto"
                         (prefer onnxrt if available).
+  --execution-provider EP, --ep EP
+                        Override onnxrt execution provider (see
+                        https://onnxruntime.ai/docs/execution-providers/). If
+                        not specified, the presumably fastest available one
+                        will be automatically selected. Only used if backend is
+                        onnxrt.
   --version             Print version number and exit.
   --help, -h            Show this help message and exit.
 ```
