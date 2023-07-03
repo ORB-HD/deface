@@ -26,7 +26,9 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-gpu = ["onnxruntime-gpu"]
+cuda = ["onnx", "onnxruntime-cuda"]
+directml = ["onnx", "onnxruntime-directml"]
+openvino = ["onnx", "onnxruntime-openvino"]
 
 [project.scripts]
 deface = "deface.deface:main"

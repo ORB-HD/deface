@@ -169,9 +169,11 @@ If the results at this fairly low resolution are not good enough, detection at 7
 
 ## Hardware acceleration
 
-Depending on your available hardware, you can often speed up neural network inference by enabling the optional [ONNX Runtime](https://microsoft.github.io/onnxruntime/) backend of `deface`.
+Depending on your available hardware, you can speed up neural network inference by enabling the optional [ONNX Runtime](https://microsoft.github.io/onnxruntime/) backend of `deface`. For optimal performance you should install it with appropriate [Execution Providers](https://onnxruntime.ai/docs/execution-providers) for your system. If you have multiple Execution Providers installed, ONNX Runtime will try to automatically use the fastest one available.
 
-### CUDA (on Nvidia GPUs)
+Here are some recommendations for common setups:
+
+### CUDA (only for Nvidia GPUs)
 
 If you have a CUDA-capable GPU, you can enable GPU acceleration by installing the relevant packages:
 
@@ -180,9 +182,22 @@ If you have a CUDA-capable GPU, you can enable GPU acceleration by installing th
 If the `onnxruntime-gpu` package is found and a GPU is available, the face detection network is automatically offloaded to the GPU.
 This can significantly improve the overall processing speed.
 
+### DirectML (only for Windows)
+
+Windows users with capable non-Nvidia GPUs can enable GPU-accelerated inference with DirectML by installing:
+
+    $ python3 -m pip install onnx onnxruntime-directml
+
+### OpenVINO
+
+OpenVINO can accelerate inference even on CPU-only systems by a few percent, compared to the default OpenCV and ONNX Runtime implementations. It works on Linux and Windows, but not yet on Python 3.11 as of July 2023. Install the backend with:
+
+    $ python3 -m pip install onnx onnxruntime-openvino
+
+
 ### Other platforms
 
-If your machine doesn't have a CUDA-capable GPU but you want to accelerate computation on another hardware platform (e.g. Intel CPUs), you can look into the available options in the [ONNX Runtime build matrix](https://microsoft.github.io/onnxruntime/).
+If you your setup doesn't fit with these recommendations, look into the available options at the [Execution Provider](https://onnxruntime.ai/docs/execution-providers/#summary-of-supported-execution-providers) documentation and find the respective installation instructions in the [ONNX Runtime build matrix](https://microsoft.github.io/onnxruntime/).
 
 
 ## How it works
@@ -196,6 +211,7 @@ The face bounding boxes predicted by the CenterFace detector are then used as ma
 
 ## Credits
 
-- `centerface.onnx` (original) and `centerface.py` (modified) are based on https://github.com/Star-Clouds/centerface (revision [8c39a49](https://github.com/Star-Clouds/CenterFace/tree/8c39a497afb78fb2c064eb84bf010c273bb7d3ce)),
-  [released under MIT license](https://github.com/Star-Clouds/CenterFace/blob/36afed/LICENSE).
-- The original source of the example images in the `examples` directory can be found [here](https://www.pexels.com/de-de/foto/stadt-kreuzung-strasse-menschen-109919/) (released under the [Pexels photo license](https://www.pexels.com/photo-license/)).
+- `centerface.py` is based on https://github.com/Star-Clouds/centerface (revision [8c39a49](https://github.com/Star-Clouds/CenterFace/tree/8c39a497afb78fb2c064eb84bf010c273bb7d3ce)),
+  [released under MIT license](https://github.com/Star-Clouds/CenterFace/blob/36afed/LICENSE)
+- The included model file `centerface.onnx` is an unmodified copy of the [`centerface_bnmerged.onnx`](https://github.com/Star-Clouds/CenterFace/blob/b82ec0c4844e89fd5a0305986aed9bdf33c72585/models/onnx/centerface_bnmerged.onnx) from https://github.com/Star-Clouds/centerface
+- The original source of the example images in the `examples` directory can be found [here](https://www.pexels.com/de-de/foto/stadt-kreuzung-strasse-menschen-109919/) (released under the [Pexels photo license](https://www.pexels.com/photo-license/))
