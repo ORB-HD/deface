@@ -1,5 +1,6 @@
-import datetime
 import os
+
+from functools import lru_cache
 
 import numpy as np
 import cv2
@@ -121,6 +122,7 @@ class CenterFace:
         return dets, lms
 
     @staticmethod
+    @lru_cache(maxsize=128)
     def shape_transform(in_shape, orig_shape):
         h_orig, w_orig = orig_shape
         w_new, h_new = in_shape
