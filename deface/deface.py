@@ -33,7 +33,8 @@ def draw_det(
         ellipse: bool = True,
         draw_scores: bool = False,
         ovcolor: Tuple[int] = (0, 0, 0),
-        replaceimg = None
+        replaceimg = None,
+        mosaicsize: int = 20
 ):
     if replacewith == 'solid':
         cv2.rectangle(frame, (x1, y1), (x2, y2), ovcolor, -1)
@@ -58,6 +59,13 @@ def draw_det(
             frame[y1:y2, x1:x2] = resized_replaceimg
         elif replaceimg.shape[2] == 4:  # RGBA
             frame[y1:y2, x1:x2] = frame[y1:y2, x1:x2] * (1 - resized_replaceimg[:, :, 3:] / 255) + resized_replaceimg[:, :, :3] * (resized_replaceimg[:, :, 3:] / 255)
+    elif replacewith == 'mosaic':
+        for y in range(y1, y2, mosaicsize):
+            for x in range(x1, x2, mosaicsize):
+                pt1 = (x, y)
+                pt2 = (min(x2, x + mosaicsize - 1), min(y2, y + mosaicsize - 1))
+                color = (int(frame[y, x][0]), int(frame[y, x][1]), int(frame[y, x][2]))
+                cv2.rectangle(frame, pt1, pt2, color, -1)
     elif replacewith == 'none':
         pass
     if draw_scores:
@@ -69,7 +77,7 @@ def draw_det(
 
 def anonymize_frame(
         dets, frame, mask_scale,
-        replacewith, ellipse, draw_scores, replaceimg
+        replacewith, ellipse, draw_scores, replaceimg, mosaicsize
 ):
     for i, det in enumerate(dets):
         boxes, score = det[:4], det[4]
@@ -84,7 +92,8 @@ def anonymize_frame(
             replacewith=replacewith,
             ellipse=ellipse,
             draw_scores=draw_scores,
-            replaceimg=replaceimg
+            replaceimg=replaceimg,
+            mosaicsize=mosaicsize
         )
 
 
@@ -108,6 +117,7 @@ def video_detect(
         ffmpeg_config: Dict[str, str],
         replaceimg = None,
         keep_audio: bool = False,
+        mosaicsize: int = 20,
 ):
     try:
         if 'fps' in ffmpeg_config:
@@ -153,7 +163,7 @@ def video_detect(
         anonymize_frame(
             dets, frame, mask_scale=mask_scale,
             replacewith=replacewith, ellipse=ellipse, draw_scores=draw_scores,
-            replaceimg=replaceimg
+            replaceimg=replaceimg, mosaicsize=mosaicsize
         )
 
         if opath is not None:
@@ -181,7 +191,8 @@ def image_detect(
         ellipse: bool,
         draw_scores: bool,
         enable_preview: bool,
-        replaceimg = None
+        replaceimg = None,
+        mosaicsize: int = 20,
 ):
     frame = imageio.imread(ipath)
 
@@ -191,7 +202,7 @@ def image_detect(
     anonymize_frame(
         dets, frame, mask_scale=mask_scale,
         replacewith=replacewith, ellipse=ellipse, draw_scores=draw_scores,
-        replaceimg=replaceimg
+        replaceimg=replaceimg, mosaicsize=mosaicsize
     )
 
     if enable_preview:
@@ -270,11 +281,14 @@ def parse_cli_args():
         '--mask-scale', default=1.3, type=float, metavar='M',
         help='Scale factor for face masks, to make sure that masks cover the complete face. Default: 1.3.')
     parser.add_argument(
-        '--replacewith', default='blur', choices=['blur', 'solid', 'none', 'img'],
-        help='Anonymization filter mode for face regions. "blur" applies a strong gaussian blurring, "solid" draws a solid black box, "none" does leaves the input unchanged and "img" replaces the face with a custom image. Default: "blur".')
+        '--replacewith', default='blur', choices=['blur', 'solid', 'none', 'img', 'mosaic'],
+        help='Anonymization filter mode for face regions. "blur" applies a strong gaussian blurring, "solid" draws a solid black box, "none" does leaves the input unchanged, "img" replaces the face with a custom image and "mosaic" replaces the face with mosaic. Default: "blur".')
     parser.add_argument(
         '--replaceimg', default='replace_img.png',
         help='Anonymization image for face regions. Requires --replacewith img option.')
+    parser.add_argument(
+        '--mosaicsize', default=20, type=int, metavar='width',
+        help='Setting the mosaic size. Requires --replacewith mosaic option. Default: 20.')
     parser.add_argument(
         '--keep-audio', '-k', default=False, action='store_true',
         help='Keep audio from video source file and copy it over to the output (only applies to videos).')
@@ -333,6 +347,7 @@ def main():
     backend = args.backend
     in_shape = args.scale
     execution_provider = args.execution_provider
+    mosaicsize = args.mosaicsize
     replaceimg = None
     if in_shape is not None:
         w, h = in_shape.split('x')
@@ -377,7 +392,8 @@ def main():
                 nested=multi_file,
                 keep_audio=keep_audio,
                 ffmpeg_config=ffmpeg_config,
-                replaceimg=replaceimg
+                replaceimg=replaceimg,
+                mosaicsize=mosaicsize
             )
         elif filetype == 'image':
             image_detect(
@@ -390,7 +406,8 @@ def main():
                 ellipse=ellipse,
                 draw_scores=draw_scores,
                 enable_preview=enable_preview,
-                replaceimg=replaceimg
+                replaceimg=replaceimg,
+                mosaicsize=mosaicsize
             )
         elif filetype is None:
             print(f'Can\'t determine file type of file {ipath}. Skipping...')
