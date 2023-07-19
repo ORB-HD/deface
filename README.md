@@ -56,9 +56,10 @@ The output may vary depending on your installed version, but it should look simi
 ```
 usage: deface [--output O] [--thresh T] [--scale WxH] [--preview] [--boxes]
               [--draw-scores] [--mask-scale M]
-              [--replacewith {blur,solid,none,img}] [--replaceimg REPLACEIMG]
-              [--keep-audio] [--ffmpeg-config FFMPEG_CONFIG]
-              [--backend {auto,onnxrt,opencv}] [--version] [--help]
+              [--replacewith {blur,solid,none,img,mosaic}]
+              [--replaceimg REPLACEIMG] [--mosaicsize width] [--keep-audio]
+              [--ffmpeg-config FFMPEG_CONFIG] [--backend {auto,onnxrt,opencv}]
+              [--execution-provider EP] [--version] [--help]
               [input ...]
 
 Video anonymization by face detection
@@ -85,15 +86,18 @@ optional arguments:
   --draw-scores         Draw detection scores onto outputs.
   --mask-scale M        Scale factor for face masks, to make sure that masks
                         cover the complete face. Default: 1.3.
-  --replacewith {blur,solid,none,img}
+  --replacewith {blur,solid,none,img,mosaic}
                         Anonymization filter mode for face regions. "blur"
                         applies a strong gaussian blurring, "solid" draws a
                         solid black box, "none" does leaves the input
-                        unchanged and "img" replaces the face with a custom
-                        image. Default: "blur".
+                        unchanged, "img" replaces the face with a custom image
+                        and "mosaic" replaces the face with mosaic. Default:
+                        "blur".
   --replaceimg REPLACEIMG
                         Anonymization image for face regions. Requires
                         --replacewith img option.
+  --mosaicsize width    Setting the mosaic size. Requires --replacewith mosaic
+                        option. Default: 20.
   --keep-audio, -k      Keep audio from video source file and copy it over to
                         the output (only applies to videos).
   --ffmpeg-config FFMPEG_CONFIG
@@ -125,6 +129,17 @@ By default, each detected face is anonymized by applying a blur filter to an ell
     $ deface examples/city.jpg --boxes --replacewith solid -o examples/city_anonymized_boxes.jpg
 
 <img src="examples/city_anonymized_boxes.jpg" width="70%" alt="$ deface examples/city.jpg --enable-boxes --replacewith solid -o examples/city_anonymized_boxes.jpg"/>
+
+### Mosaic anonymization
+
+Another common anonymization option is to draw a mosaic pattern over faces. This is supported with the `--replacewith mosaic` option. The width of each of the quadratic mosaic fragments can be determined using the `--mosaicsize` option (default value: 20). Note that the mosaic size is measured in pixels, so you should consider increasing the size when processing higher-resolution inputs.
+
+Usage example:
+
+    $ deface examples/city.jpg --replacewith mosaic --mosaicsize 20 -o examples/city_anonymized_mosaic.jpg
+
+<img src="examples/city_anonymized_mosaic.jpg" width="70%" alt="$ deface examples/city.jpg --replacewith mosaic --mosaicsize 20 -o examples/city_anonymized_mosaic.jpg"/>
+
 
 
 ### Tuning detection thresholds
