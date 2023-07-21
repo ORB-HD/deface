@@ -74,11 +74,40 @@ def draw_det(
             cv2.FONT_HERSHEY_DUPLEX, 0.5, (0, 255, 0)
         )
 
+def remove_large_blobs(dets, frame, frame_fraction=None):
+    """
+    Remove blobs that have width or height larger than frame_fraction size.
+    """
+    if frame_fraction is not None:
+        width_max = frame.shape[1] * frame_fraction
+        height_max = frame.shape[0] * frame_fraction
+
+        widths = dets[:,2] - dets[:,0]
+        heights = dets[:,3] - dets[:,1]
+
+        mask = (widths < width_max * np.ones(dets.shape[0])) & (heights < height_max * np.ones(dets.shape[0]))
+        dets = dets[mask,:]
+
+    return dets
+
+def remove_low_scores(dets, scores_threshold=None):
+    """
+    Remove blobs with scores values lower than scores_threshold.
+    """
+    if scores_threshold is not None:
+        mask = dets[:,4] > scores_threshold * np.ones(dets.shape[0])
+        dets = dets[mask,:]
+
+    return dets
 
 def anonymize_frame(
         dets, frame, mask_scale,
-        replacewith, ellipse, draw_scores, replaceimg, mosaicsize
+        replacewith, ellipse, draw_scores, replaceimg, mosaicsize,
+        scorethresh, scalelim
 ):
+    dets = remove_low_scores(dets, scores_threshold=scorethresh)
+    dets = remove_large_blobs(dets, frame, frame_fraction=scalelim)
+
     for i, det in enumerate(dets):
         boxes, score = det[:4], det[4]
         x1, y1, x2, y2 = boxes.astype(int)
@@ -118,6 +147,8 @@ def video_detect(
         replaceimg = None,
         keep_audio: bool = False,
         mosaicsize: int = 20,
+        scorethresh=None,
+        scalelim=None
 ):
     try:
         if 'fps' in ffmpeg_config:
@@ -163,7 +194,8 @@ def video_detect(
         anonymize_frame(
             dets, frame, mask_scale=mask_scale,
             replacewith=replacewith, ellipse=ellipse, draw_scores=draw_scores,
-            replaceimg=replaceimg, mosaicsize=mosaicsize
+            replaceimg=replaceimg, mosaicsize=mosaicsize,
+            scorethresh=scorethresh, scalelim=scalelim
         )
 
         if opath is not None:
@@ -193,6 +225,8 @@ def image_detect(
         enable_preview: bool,
         replaceimg = None,
         mosaicsize: int = 20,
+        scorethresh=None,
+        scalelim=None
 ):
     frame = imageio.imread(ipath)
 
@@ -202,7 +236,8 @@ def image_detect(
     anonymize_frame(
         dets, frame, mask_scale=mask_scale,
         replacewith=replacewith, ellipse=ellipse, draw_scores=draw_scores,
-        replaceimg=replaceimg, mosaicsize=mosaicsize
+        replaceimg=replaceimg, mosaicsize=mosaicsize,
+        scorethresh=scorethresh, scalelim=scalelim
     )
 
     if enable_preview:
@@ -265,6 +300,12 @@ def parse_cli_args():
     parser.add_argument(
         '--thresh', '-t', default=0.2, type=float, metavar='T',
         help='Detection threshold (tune this to trade off between false positive and false negative rate). Default: 0.2.')
+    parser.add_argument(
+        '--scorethresh', default=None, type=float,
+        help='Remove masks with low scores. Default: 0.1.')
+    parser.add_argument(
+        '--scalelim', default=None, type=float,
+        help='Remove masks with masks larger than scalelim size of frame. Default: 0.1.')
     parser.add_argument(
         '--scale', '-s', default=None, metavar='WxH',
         help='Downscale images for network inference to this size (format: WxH, example: --scale 640x360).')
@@ -340,6 +381,8 @@ def main():
     enable_preview = args.preview
     draw_scores = args.draw_scores
     threshold = args.thresh
+    scorethresh = args.scorethresh
+    scalelim = args.scalelim
     ellipse = not args.boxes
     mask_scale = args.mask_scale
     keep_audio = args.keep_audio
@@ -393,7 +436,9 @@ def main():
                 keep_audio=keep_audio,
                 ffmpeg_config=ffmpeg_config,
                 replaceimg=replaceimg,
-                mosaicsize=mosaicsize
+                mosaicsize=mosaicsize,
+                scorethresh=scorethresh,
+                scalelim=scalelim
             )
         elif filetype == 'image':
             image_detect(
@@ -407,7 +452,9 @@ def main():
                 draw_scores=draw_scores,
                 enable_preview=enable_preview,
                 replaceimg=replaceimg,
-                mosaicsize=mosaicsize
+                mosaicsize=mosaicsize,
+                scorethresh=scorethresh,
+                scalelim=scalelim
             )
         elif filetype is None:
             print(f'Can\'t determine file type of file {ipath}. Skipping...')
