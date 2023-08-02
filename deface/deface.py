@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 import argparse
 import json
 import mimetypes
@@ -9,13 +7,12 @@ from typing import Dict, Tuple
 import tqdm
 import skimage.draw
 import numpy as np
-import imageio
+import imageio.v2 as iio
 import imageio.plugins.ffmpeg
 import cv2
 
 from deface import __version__
 from deface.centerface import CenterFace
-
 
 def scale_bb(x1, y1, x2, y2, mask_scale=1.0):
     s = mask_scale - 1.0
@@ -180,7 +177,6 @@ def video_detect(
         writer.close()
     bar.close()
 
-
 def image_detect(
         ipath: str,
         opath: str,
@@ -194,8 +190,12 @@ def image_detect(
         replaceimg = None,
         mosaicsize: int = 20,
 ):
-    frame = imageio.imread(ipath)
+    frame = iio.imread(ipath)
 
+    # Source image EXIF metadata retrieval via imageio V3 lib
+    metadata = imageio.v3.immeta(ipath)
+    exif_dict = metadata.get("exif", None)
+    
     # Perform network inference, get bb dets but discard landmark predictions
     dets, _ = centerface(frame, threshold=threshold)
 
@@ -209,8 +209,9 @@ def image_detect(
         cv2.imshow('Preview of anonymization results (quit by pressing Q or Escape)', frame[:, :, ::-1])  # RGB -> RGB
         if cv2.waitKey(0) & 0xFF in [ord('q'), 27]:  # 27 is the escape key code
             cv2.destroyAllWindows()
-
-    imageio.imsave(opath, frame)
+    
+    # Save image with EXIF metadata
+    imageio.imsave(opath, frame, exif=exif_dict)
     # print(f'Output saved to {opath}')
 
 
@@ -334,7 +335,7 @@ def main():
             # Either a path to a regular file, the special 'cam' shortcut
             # or an invalid path. The latter two cases are handled below.
             ipaths.append(path)
-
+    
     base_opath = args.output
     replacewith = args.replacewith
     enable_preview = args.preview
@@ -346,7 +347,6 @@ def main():
     ffmpeg_config = args.ffmpeg_config
     backend = args.backend
     in_shape = args.scale
-    execution_provider = args.execution_provider
     mosaicsize = args.mosaicsize
     replaceimg = None
     if in_shape is not None:
@@ -358,7 +358,7 @@ def main():
 
 
     # TODO: scalar downscaling setting (-> in_shape), preserving aspect ratio
-    centerface = CenterFace(in_shape=in_shape, backend=backend, override_execution_provider=execution_provider)
+    centerface = CenterFace(in_shape=in_shape, backend=backend)
 
     multi_file = len(ipaths) > 1
     if multi_file:
