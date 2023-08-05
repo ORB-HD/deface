@@ -148,11 +148,12 @@ def video_detect(
         keep_audio: bool = False,
         mosaicsize: int = 20,
         scorethresh=None,
-        scalelim=None
+        scalelim=None,
+        size=None
 ):
     try:
         if 'fps' in ffmpeg_config:
-            reader: imageio.plugins.ffmpeg.FfmpegFormat.Reader = imageio.get_reader(ipath, fps=ffmpeg_config['fps'])
+            reader: imageio.plugins.ffmpeg.FfmpegFormat.Reader = imageio.get_reader(ipath, fps=ffmpeg_config['fps'], size=size)
         else:
             reader: imageio.plugins.ffmpeg.FfmpegFormat.Reader = imageio.get_reader(ipath)
 
@@ -438,7 +439,8 @@ def main():
                 replaceimg=replaceimg,
                 mosaicsize=mosaicsize,
                 scorethresh=scorethresh,
-                scalelim=scalelim
+                scalelim=scalelim,
+                size=in_shape
             )
         elif filetype == 'image':
             image_detect(
