@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import argparse
 import json
 import mimetypes
@@ -7,12 +9,14 @@ from typing import Dict, Tuple
 import tqdm
 import skimage.draw
 import numpy as np
+import imageio
 import imageio.v2 as iio
 import imageio.plugins.ffmpeg
 import cv2
 
 from deface import __version__
 from deface.centerface import CenterFace
+
 
 def scale_bb(x1, y1, x2, y2, mask_scale=1.0):
     s = mask_scale - 1.0
@@ -83,7 +87,6 @@ def anonymize_frame(
         # Clip bb coordinates to valid frame region
         y1, y2 = max(0, y1), min(frame.shape[0] - 1, y2)
         x1, x2 = max(0, x1), min(frame.shape[1] - 1, x2)
-
         draw_det(
             frame, score, i, x1, y1, x2, y2,
             replacewith=replacewith,
@@ -121,7 +124,7 @@ def video_detect(
             reader: imageio.plugins.ffmpeg.FfmpegFormat.Reader = imageio.get_reader(ipath, fps=ffmpeg_config['fps'])
         else:
             reader: imageio.plugins.ffmpeg.FfmpegFormat.Reader = imageio.get_reader(ipath)
-
+        
         meta = reader.get_meta_data()
         _ = meta['size']
     except:
@@ -141,7 +144,7 @@ def video_detect(
         bar = tqdm.tqdm(dynamic_ncols=True, total=nframes, position=1, leave=True)
     else:
         bar = tqdm.tqdm(dynamic_ncols=True, total=nframes)
-
+    
     if opath is not None:
         _ffmpeg_config = ffmpeg_config.copy()
         #  If fps is not explicitly set in ffmpeg_config, use source video fps value
@@ -152,20 +155,20 @@ def video_detect(
         writer: imageio.plugins.ffmpeg.FfmpegFormat.Writer = imageio.get_writer(
             opath, format='FFMPEG', mode='I', **_ffmpeg_config
         )
-
+    
     for frame in read_iter:
         # Perform network inference, get bb dets but discard landmark predictions
         dets, _ = centerface(frame, threshold=threshold)
-
+        
         anonymize_frame(
             dets, frame, mask_scale=mask_scale,
             replacewith=replacewith, ellipse=ellipse, draw_scores=draw_scores,
             replaceimg=replaceimg, mosaicsize=mosaicsize
         )
-
+        
         if opath is not None:
             writer.append_data(frame)
-
+        
         if enable_preview:
             cv2.imshow('Preview of anonymization results (quit by pressing Q or Escape)', frame[:, :, ::-1])  # RGB -> RGB
             if cv2.waitKey(1) & 0xFF in [ord('q'), 27]:  # 27 is the escape key code
@@ -177,6 +180,7 @@ def video_detect(
         writer.close()
     bar.close()
 
+
 def image_detect(
         ipath: str,
         opath: str,
@@ -187,15 +191,17 @@ def image_detect(
         ellipse: bool,
         draw_scores: bool,
         enable_preview: bool,
+        keep_metadata: bool,
         replaceimg = None,
         mosaicsize: int = 20,
 ):
     frame = iio.imread(ipath)
 
-    # Source image EXIF metadata retrieval via imageio V3 lib
-    metadata = imageio.v3.immeta(ipath)
-    exif_dict = metadata.get("exif", None)
-    
+    if keep_metadata:
+        # Source image EXIF metadata retrieval via imageio V3 lib
+        metadata = imageio.v3.immeta(ipath)
+        exif_dict = metadata.get("exif", None)
+
     # Perform network inference, get bb dets but discard landmark predictions
     dets, _ = centerface(frame, threshold=threshold)
 
@@ -209,9 +215,13 @@ def image_detect(
         cv2.imshow('Preview of anonymization results (quit by pressing Q or Escape)', frame[:, :, ::-1])  # RGB -> RGB
         if cv2.waitKey(0) & 0xFF in [ord('q'), 27]:  # 27 is the escape key code
             cv2.destroyAllWindows()
-    
-    # Save image with EXIF metadata
-    imageio.imsave(opath, frame, exif=exif_dict)
+
+    imageio.imsave(opath, frame)
+
+    if keep_metadata:
+        # Save image with EXIF metadata
+        imageio.imsave(opath, frame, exif=exif_dict)
+        
     # print(f'Output saved to {opath}')
 
 
@@ -306,19 +316,22 @@ def parse_cli_args():
     parser.add_argument(
         '--version', action='version', version=__version__,
         help='Print version number and exit.')
+    parser.add_argument(
+        '--keep-metadata', '-m', default=False, action='store_true',
+        help='Keep metadata of the initial image. Default : None.')
     parser.add_argument('--help', '-h', action='help', help='Show this help message and exit.')
-
+    
     args = parser.parse_args()
-
+    
     if len(args.input) == 0:
         parser.print_help()
         print('\nPlease supply at least one input path.')
         exit(1)
-
+    
     if args.input == ['cam']:  # Shortcut for webcam demo with live preview
         args.input = ['<video0>']
         args.preview = True
-
+    
     return args
 
 
@@ -335,6 +348,7 @@ def main():
             # Either a path to a regular file, the special 'cam' shortcut
             # or an invalid path. The latter two cases are handled below.
             ipaths.append(path)
+
     
     base_opath = args.output
     replacewith = args.replacewith
@@ -347,7 +361,9 @@ def main():
     ffmpeg_config = args.ffmpeg_config
     backend = args.backend
     in_shape = args.scale
+    execution_provider = args.execution_provider
     mosaicsize = args.mosaicsize
+    keep_metadata = args.keep_metadata
     replaceimg = None
     if in_shape is not None:
         w, h = in_shape.split('x')
@@ -358,12 +374,12 @@ def main():
 
 
     # TODO: scalar downscaling setting (-> in_shape), preserving aspect ratio
-    centerface = CenterFace(in_shape=in_shape, backend=backend)
+    centerface = CenterFace(in_shape=in_shape, backend=backend, override_execution_provider=execution_provider)
 
     multi_file = len(ipaths) > 1
     if multi_file:
         ipaths = tqdm.tqdm(ipaths, position=0, dynamic_ncols=True, desc='Batch progress')
-
+    
     for ipath in ipaths:
         opath = base_opath
         if ipath == 'cam':
@@ -406,6 +422,7 @@ def main():
                 ellipse=ellipse,
                 draw_scores=draw_scores,
                 enable_preview=enable_preview,
+                keep_metadata=keep_metadata,
                 replaceimg=replaceimg,
                 mosaicsize=mosaicsize
             )
