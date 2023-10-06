@@ -124,7 +124,7 @@ def video_detect(
             reader: imageio.plugins.ffmpeg.FfmpegFormat.Reader = imageio.get_reader(ipath, fps=ffmpeg_config['fps'])
         else:
             reader: imageio.plugins.ffmpeg.FfmpegFormat.Reader = imageio.get_reader(ipath)
-        
+
         meta = reader.get_meta_data()
         _ = meta['size']
     except:
@@ -144,7 +144,7 @@ def video_detect(
         bar = tqdm.tqdm(dynamic_ncols=True, total=nframes, position=1, leave=True)
     else:
         bar = tqdm.tqdm(dynamic_ncols=True, total=nframes)
-    
+
     if opath is not None:
         _ffmpeg_config = ffmpeg_config.copy()
         #  If fps is not explicitly set in ffmpeg_config, use source video fps value
@@ -155,20 +155,20 @@ def video_detect(
         writer: imageio.plugins.ffmpeg.FfmpegFormat.Writer = imageio.get_writer(
             opath, format='FFMPEG', mode='I', **_ffmpeg_config
         )
-    
+
     for frame in read_iter:
         # Perform network inference, get bb dets but discard landmark predictions
         dets, _ = centerface(frame, threshold=threshold)
-        
+
         anonymize_frame(
             dets, frame, mask_scale=mask_scale,
             replacewith=replacewith, ellipse=ellipse, draw_scores=draw_scores,
             replaceimg=replaceimg, mosaicsize=mosaicsize
         )
-        
+
         if opath is not None:
             writer.append_data(frame)
-        
+
         if enable_preview:
             cv2.imshow('Preview of anonymization results (quit by pressing Q or Escape)', frame[:, :, ::-1])  # RGB -> RGB
             if cv2.waitKey(1) & 0xFF in [ord('q'), 27]:  # 27 is the escape key code
@@ -221,7 +221,7 @@ def image_detect(
     if keep_metadata:
         # Save image with EXIF metadata
         imageio.imsave(opath, frame, exif=exif_dict)
-        
+
     # print(f'Output saved to {opath}')
 
 
@@ -318,20 +318,20 @@ def parse_cli_args():
         help='Print version number and exit.')
     parser.add_argument(
         '--keep-metadata', '-m', default=False, action='store_true',
-        help='Keep metadata of the initial image. Default : None.')
+        help='Keep metadata of the original image. Default : False.')
     parser.add_argument('--help', '-h', action='help', help='Show this help message and exit.')
-    
+
     args = parser.parse_args()
-    
+
     if len(args.input) == 0:
         parser.print_help()
         print('\nPlease supply at least one input path.')
         exit(1)
-    
+
     if args.input == ['cam']:  # Shortcut for webcam demo with live preview
         args.input = ['<video0>']
         args.preview = True
-    
+
     return args
 
 
@@ -379,7 +379,7 @@ def main():
     multi_file = len(ipaths) > 1
     if multi_file:
         ipaths = tqdm.tqdm(ipaths, position=0, dynamic_ncols=True, desc='Batch progress')
-    
+
     for ipath in ipaths:
         opath = base_opath
         if ipath == 'cam':
