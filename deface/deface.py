@@ -10,6 +10,7 @@ import tqdm
 import skimage.draw
 import numpy as np
 import imageio
+import imageio.v2 as iio
 import imageio.plugins.ffmpeg
 import cv2
 
@@ -86,7 +87,6 @@ def anonymize_frame(
         # Clip bb coordinates to valid frame region
         y1, y2 = max(0, y1), min(frame.shape[0] - 1, y2)
         x1, x2 = max(0, x1), min(frame.shape[1] - 1, x2)
-
         draw_det(
             frame, score, i, x1, y1, x2, y2,
             replacewith=replacewith,
@@ -192,10 +192,16 @@ def image_detect(
         ellipse: bool,
         draw_scores: bool,
         enable_preview: bool,
+        keep_metadata: bool,
         replaceimg = None,
         mosaicsize: int = 20,
 ):
-    frame = imageio.imread(ipath)
+    frame = iio.imread(ipath)
+
+    if keep_metadata:
+        # Source image EXIF metadata retrieval via imageio V3 lib
+        metadata = imageio.v3.immeta(ipath)
+        exif_dict = metadata.get("exif", None)
 
     # Perform network inference, get bb dets but discard landmark predictions
     dets, _ = centerface(frame, threshold=threshold)
@@ -212,6 +218,11 @@ def image_detect(
             cv2.destroyAllWindows()
 
     imageio.imsave(opath, frame)
+
+    if keep_metadata:
+        # Save image with EXIF metadata
+        imageio.imsave(opath, frame, exif=exif_dict)
+
     # print(f'Output saved to {opath}')
 
 
@@ -306,6 +317,9 @@ def parse_cli_args():
     parser.add_argument(
         '--version', action='version', version=__version__,
         help='Print version number and exit.')
+    parser.add_argument(
+        '--keep-metadata', '-m', default=False, action='store_true',
+        help='Keep metadata of the original image. Default : False.')
     parser.add_argument('--help', '-h', action='help', help='Show this help message and exit.')
 
     args = parser.parse_args()
@@ -336,6 +350,7 @@ def main():
             # or an invalid path. The latter two cases are handled below.
             ipaths.append(path)
 
+    
     base_opath = args.output
     replacewith = args.replacewith
     enable_preview = args.preview
@@ -349,6 +364,7 @@ def main():
     in_shape = args.scale
     execution_provider = args.execution_provider
     mosaicsize = args.mosaicsize
+    keep_metadata = args.keep_metadata
     replaceimg = None
     if in_shape is not None:
         w, h = in_shape.split('x')
@@ -407,6 +423,7 @@ def main():
                 ellipse=ellipse,
                 draw_scores=draw_scores,
                 enable_preview=enable_preview,
+                keep_metadata=keep_metadata,
                 replaceimg=replaceimg,
                 mosaicsize=mosaicsize
             )
