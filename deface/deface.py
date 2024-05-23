@@ -78,7 +78,7 @@ def draw_det(
 
 def anonymize_frame(
         dets, frame, mask_scale,
-        replacewith, ellipse, draw_scores, replaceimg, mosaicsize
+        replacewith, ellipse, draw_scores, replaceimg, mosaicsize = None
 ):
     for i, det in enumerate(dets):
         boxes, score = det[:4], det[4]
