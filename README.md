@@ -84,6 +84,8 @@ optional arguments:
   --preview, -p         Enable live preview GUI (can decrease performance).
   --boxes               Use boxes instead of ellipse masks.
   --draw-scores         Draw detection scores onto outputs.
+  --disable-progress-output
+                        Disable video progress output to console.
   --mask-scale M        Scale factor for face masks, to make sure that masks
                         cover the complete face. Default: 1.3.
   --replacewith {blur,solid,none,img,mosaic}

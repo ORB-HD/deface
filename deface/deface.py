@@ -118,6 +118,7 @@ def video_detect(
         replaceimg = None,
         keep_audio: bool = False,
         mosaicsize: int = 20,
+        disable_progress_output = False
 ):
     try:
         if 'fps' in ffmpeg_config:
@@ -141,9 +142,9 @@ def video_detect(
         read_iter = reader.iter_data()
         nframes = reader.count_frames()
     if nested:
-        bar = tqdm.tqdm(dynamic_ncols=True, total=nframes, position=1, leave=True)
+        bar = tqdm.tqdm(dynamic_ncols=True, total=nframes, position=1, leave=True, disable=disable_progress_output)
     else:
-        bar = tqdm.tqdm(dynamic_ncols=True, total=nframes)
+        bar = tqdm.tqdm(dynamic_ncols=True, total=nframes, disable=disable_progress_output)
 
     if opath is not None:
         _ffmpeg_config = ffmpeg_config.copy()
@@ -290,6 +291,9 @@ def parse_cli_args():
         '--draw-scores', default=False, action='store_true',
         help='Draw detection scores onto outputs.')
     parser.add_argument(
+        '--disable-progress-output', default=False, action='store_true',
+        help='Disable video progress output to console.')
+    parser.add_argument(
         '--mask-scale', default=1.3, type=float, metavar='M',
         help='Scale factor for face masks, to make sure that masks cover the complete face. Default: 1.3.')
     parser.add_argument(
@@ -366,6 +370,8 @@ def main():
     mosaicsize = args.mosaicsize
     keep_metadata = args.keep_metadata
     replaceimg = None
+    disable_progress_output = args.disable_progress_output
+
     if in_shape is not None:
         w, h = in_shape.split('x')
         in_shape = int(w), int(h)
@@ -410,7 +416,8 @@ def main():
                 keep_audio=keep_audio,
                 ffmpeg_config=ffmpeg_config,
                 replaceimg=replaceimg,
-                mosaicsize=mosaicsize
+                mosaicsize=mosaicsize,
+                disable_progress_output=disable_progress_output
             )
         elif filetype == 'image':
             image_detect(
