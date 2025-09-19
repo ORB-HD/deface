@@ -3,7 +3,7 @@
 # `deface`: Video anonymization by face detection
 
 `deface` is a simple command-line tool for automatic anonymization of faces in videos or photos.
-It works by first detecting all human faces in each video frame and then applying an anonymization filter (blurring or black boxes) on each detected face region.
+It works by first detecting all human faces in each video frame and then applying an anonymization filter (black boxes, mosaic or blurring) on each detected face region.
 By default all audio tracks are discarded as well.
 
 
@@ -26,6 +26,7 @@ Alternatively, if you want to use the latest (unreleased) revision directly from
 
 This will only install the dependencies that are strictly required for running the tool. If you want to speed up processing by enabling hardware acceleration, you will need to manually install additional packages, see [Hardware acceleration](#hardware-acceleration)
 
+`deface` is also available as an AUR package
 
 ## Usage
 
@@ -91,10 +92,10 @@ optional arguments:
   --replacewith {blur,solid,none,img,mosaic}
                         Anonymization filter mode for face regions. "blur"
                         applies a strong gaussian blurring, "solid" draws a
-                        solid black box, "none" does leaves the input
+                        solid black box, "none" leaves the input
                         unchanged, "img" replaces the face with a custom image
                         and "mosaic" replaces the face with mosaic. Default:
-                        "blur".
+                        "solid".
   --replaceimg REPLACEIMG
                         Anonymization image for face regions. Requires
                         --replacewith img option.
@@ -124,13 +125,19 @@ optional arguments:
 
 In most use cases the default configuration should be sufficient, but depending on individual requirements and type of media to be processed, some of the options might need to be adjusted. In this section, some common example scenarios that require option changes are presented. All of the examples use the photo [examples/city.jpg](examples/city.jpg), but they work the same on any video or photo file.
 
-### Drawing black boxes
+### Blurring faces in blocks
 
-By default, each detected face is anonymized by applying a blur filter to an ellipse region that covers the face. If you prefer to anonymize faces by drawing black boxes on top of them, you can achieve this through the `--boxes` and `--replacewith` options:
+By default, each detected face is anonymized by replacing the face with a black box. If you prefer to anonymize faces by applying a blur to an ellipse region that covers them, you can achieve this through the `--blur` and `--replacewith` options:
 
-    $ deface examples/city.jpg --boxes --replacewith solid -o examples/city_anonymized_boxes.jpg
+    $ deface examples/city.jpg --replacewith blur -o examples/city_anonymized_boxes.jpg
 
-<img src="examples/city_anonymized_boxes.jpg" width="70%" alt="$ deface examples/city.jpg --enable-boxes --replacewith solid -o examples/city_anonymized_boxes.jpg"/>
+<img src="examples/city_anonymized_blur.jpg" width="70%" alt="$ deface examples/city.jpg --replacewith blur -o examples/city_anonymized_blur.jpg"/>
+
+It is also possible to blur the whole box instead of an ellipse:
+
+	$ deface examples/city.jpg --boxes --replacewith blur -o examples/city_anonymized_boxes.jpg
+
+<img src="examples/city_anonymized_blur_boxes.jpg" width="70%" alt="$ deface examples/city.jpg --boxes --replacewith blur -o examples/city_anonymized_blur_boxes.jpg"/>
 
 ### Mosaic anonymization
 
@@ -164,7 +171,7 @@ To demonstrate the effects of a threshold that is set too low or too high, see t
 
 If you are interested in seeing the faceness score (a score between 0 and 1 that roughly corresponds to the detector's confidence that something *is* a face) of each detected face in the input, you can enable the `--draw-scores` option to draw the score of each detection directly above its location.
 
-    $ deface examples/city.jpg --draw-scores -o examples/city_anonymized_scores.jpg
+    $ deface examples/city.jpg --draw-scores --replacewith blur -o examples/city_anonymized_scores.jpg
 
 <img src="examples/city_anonymized_scores.jpg" width="70%" alt="$ deface examples/city.jpg --draw-scores -o examples/city_anonymized_scores.jpg"/>
 

@@ -30,7 +30,7 @@ def scale_bb(x1, y1, x2, y2, mask_scale=1.0):
 
 def draw_det(
         frame, score, det_idx, x1, y1, x2, y2,
-        replacewith: str = 'blur',
+        replacewith: str = 'solid',
         ellipse: bool = True,
         draw_scores: bool = False,
         ovcolor: Tuple[int] = (0, 0, 0),
@@ -297,7 +297,7 @@ def parse_cli_args():
         '--mask-scale', default=1.3, type=float, metavar='M',
         help='Scale factor for face masks, to make sure that masks cover the complete face. Default: 1.3.')
     parser.add_argument(
-        '--replacewith', default='blur', choices=['blur', 'solid', 'none', 'img', 'mosaic'],
+        '--replacewith', default='solid', choices=['blur', 'solid', 'none', 'img', 'mosaic'],
         help='Anonymization filter mode for face regions. "blur" applies a strong gaussian blurring, "solid" draws a solid black box, "none" does leaves the input unchanged, "img" replaces the face with a custom image and "mosaic" replaces the face with mosaic. Default: "blur".')
     parser.add_argument(
         '--replaceimg', default='replace_img.png',
