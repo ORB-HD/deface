@@ -48,7 +48,13 @@ def draw_det(
         if ellipse:
             roibox = frame[y1:y2, x1:x2]
             # Get y and x coordinate lists of the "bounding ellipse"
-            ey, ex = skimage.draw.ellipse((y2 - y1) // 2, (x2 - x1) // 2, (y2 - y1) // 2, (x2 - x1) // 2)
+            # Scale ellipse to cover ~70% of original face detection area
+            _es = 0.59
+            ey, ex = skimage.draw.ellipse(
+                (y2 - y1) // 2, (x2 - x1) // 2,
+                int((y2 - y1) // 2 * _es),
+                int((x2 - x1) // 2 * _es)
+            )
             roibox[ey, ex] = blurred_box[ey, ex]
             frame[y1:y2, x1:x2] = roibox
         else:
