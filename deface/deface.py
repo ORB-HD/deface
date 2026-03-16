@@ -49,7 +49,7 @@ def draw_det(
             roibox = frame[y1:y2, x1:x2]
             # Get y and x coordinate lists of the "bounding ellipse"
             # Scale ellipse to cover ~70% of original face detection area
-            _es = 0.59
+            _es = 0.49
             ey, ex = skimage.draw.ellipse(
                 (y2 - y1) // 2, (x2 - x1) // 2,
                 int((y2 - y1) // 2 * _es),
@@ -360,7 +360,7 @@ def main():
             # or an invalid path. The latter two cases are handled below.
             ipaths.append(path)
 
-    
+
     base_opath = args.output
     replacewith = args.replacewith
     enable_preview = args.preview
