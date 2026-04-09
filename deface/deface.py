@@ -35,7 +35,8 @@ def draw_det(
         draw_scores: bool = False,
         ovcolor: Tuple[int] = (0, 0, 0),
         replaceimg = None,
-        mosaicsize: int = 20
+        mosaicsize: int = 20,
+        keep_replace_aspect: bool = False,
 ):
     if replacewith == 'solid':
         cv2.rectangle(frame, (x1, y1), (x2, y2), ovcolor, -1)
@@ -54,12 +55,35 @@ def draw_det(
         else:
             frame[y1:y2, x1:x2] = blurred_box
     elif replacewith == 'img':
-        target_size = (x2 - x1, y2 - y1)
-        resized_replaceimg = cv2.resize(replaceimg, target_size)
-        if replaceimg.shape[2] == 3:  # RGB
-            frame[y1:y2, x1:x2] = resized_replaceimg
-        elif replaceimg.shape[2] == 4:  # RGBA
-            frame[y1:y2, x1:x2] = frame[y1:y2, x1:x2] * (1 - resized_replaceimg[:, :, 3:] / 255) + resized_replaceimg[:, :, :3] * (resized_replaceimg[:, :, 3:] / 255)
+        target_w, target_h = x2 - x1, y2 - y1
+        if keep_replace_aspect:
+            replace_img_h, replace_img_w = replaceimg.shape[:2]
+            scale = max(target_w / replace_img_w, target_h / replace_img_h)
+            new_w, new_h = int(replace_img_w * scale), int(replace_img_h * scale)
+            resized_replaceimg = cv2.resize(replaceimg, (new_w, new_h))
+            # Center on the face box, may extend beyond detected boundaries
+            cx, cy = (x1 + x2) // 2, (y1 + y2) // 2
+            px1, py1 = cx - new_w // 2, cy - new_h // 2
+            px2, py2 = px1 + new_w, py1 + new_h
+            # Clamp to frame boundaries
+            fx1, fy1 = max(0, px1), max(0, py1)
+            fx2, fy2 = min(frame.shape[1], px2), min(frame.shape[0], py2)
+            ix1, iy1 = fx1 - px1, fy1 - py1
+            ix2, iy2 = ix1 + (fx2 - fx1), iy1 + (fy2 - fy1)
+            if replaceimg.shape[2] == 3:  # RGB
+                frame[fy1:fy2, fx1:fx2] = resized_replaceimg[iy1:iy2, ix1:ix2]
+            elif replaceimg.shape[2] == 4:  # RGBA
+                alpha = resized_replaceimg[iy1:iy2, ix1:ix2, 3:] / 255
+                frame[fy1:fy2, fx1:fx2] = (
+                    frame[fy1:fy2, fx1:fx2] * (1 - alpha)
+                    + resized_replaceimg[iy1:iy2, ix1:ix2, :3] * alpha
+                )
+        else:
+            resized_replaceimg = cv2.resize(replaceimg, (target_w, target_h))
+            if replaceimg.shape[2] == 3:  # RGB
+                frame[y1:y2, x1:x2] = resized_replaceimg
+            elif replaceimg.shape[2] == 4:  # RGBA
+                frame[y1:y2, x1:x2] = frame[y1:y2, x1:x2] * (1 - resized_replaceimg[:, :, 3:] / 255) + resized_replaceimg[:, :, :3] * (resized_replaceimg[:, :, 3:] / 255)
     elif replacewith == 'mosaic':
         for y in range(y1, y2, mosaicsize):
             for x in range(x1, x2, mosaicsize):
@@ -78,7 +102,8 @@ def draw_det(
 
 def anonymize_frame(
         dets, frame, mask_scale,
-        replacewith, ellipse, draw_scores, replaceimg, mosaicsize
+        replacewith, ellipse, draw_scores, replaceimg, mosaicsize,
+        keep_replace_aspect: bool = False,
 ):
     for i, det in enumerate(dets):
         boxes, score = det[:4], det[4]
@@ -93,7 +118,8 @@ def anonymize_frame(
             ellipse=ellipse,
             draw_scores=draw_scores,
             replaceimg=replaceimg,
-            mosaicsize=mosaicsize
+            mosaicsize=mosaicsize,
+            keep_replace_aspect=keep_replace_aspect,
         )
 
 
@@ -118,6 +144,7 @@ def video_detect(
         replaceimg = None,
         keep_audio: bool = False,
         mosaicsize: int = 20,
+        keep_replace_aspect: bool = False,
         disable_progress_output = False
 ):
     try:
@@ -165,7 +192,8 @@ def video_detect(
         anonymize_frame(
             dets, frame, mask_scale=mask_scale,
             replacewith=replacewith, ellipse=ellipse, draw_scores=draw_scores,
-            replaceimg=replaceimg, mosaicsize=mosaicsize
+            replaceimg=replaceimg, mosaicsize=mosaicsize,
+            keep_replace_aspect=keep_replace_aspect,
         )
 
         if opath is not None:
@@ -196,6 +224,7 @@ def image_detect(
         keep_metadata: bool,
         replaceimg = None,
         mosaicsize: int = 20,
+        keep_replace_aspect: bool = False,
 ):
     frame = iio.imread(ipath)
 
@@ -210,7 +239,8 @@ def image_detect(
     anonymize_frame(
         dets, frame, mask_scale=mask_scale,
         replacewith=replacewith, ellipse=ellipse, draw_scores=draw_scores,
-        replaceimg=replaceimg, mosaicsize=mosaicsize
+        replaceimg=replaceimg, mosaicsize=mosaicsize,
+        keep_replace_aspect=keep_replace_aspect,
     )
 
     if enable_preview:
@@ -248,7 +278,8 @@ def get_anonymized_image(frame,
                          mask_scale: float,
                          ellipse: bool,
                          draw_scores: bool,
-                         replaceimg = None
+                         replaceimg = None,
+                         keep_replace_aspect: bool = False,
                          ):
     """
     Method for getting an anonymized image without CLI
@@ -261,7 +292,7 @@ def get_anonymized_image(frame,
     anonymize_frame(
         dets, frame, mask_scale=mask_scale,
         replacewith=replacewith, ellipse=ellipse, draw_scores=draw_scores,
-        replaceimg=replaceimg
+        replaceimg=replaceimg, keep_replace_aspect=keep_replace_aspect,
     )
 
     return frame
@@ -305,6 +336,9 @@ def parse_cli_args():
     parser.add_argument(
         '--mosaicsize', default=20, type=int, metavar='width',
         help='Setting the mosaic size. Requires --replacewith mosaic option. Default: 20.')
+    parser.add_argument(
+        '--keep-replace-aspect', default=False, action='store_true',
+        help='Preserve the aspect ratio of the replacement image. Requires --replacewith img option. Default: False.')
     parser.add_argument(
         '--keep-audio', '-k', default=False, action='store_true',
         help='Keep audio from video source file and copy it over to the output (only applies to videos).')
@@ -369,6 +403,7 @@ def main():
     execution_provider = args.execution_provider
     mosaicsize = args.mosaicsize
     keep_metadata = args.keep_metadata
+    keep_replace_aspect = args.keep_replace_aspect
     replaceimg = None
     disable_progress_output = args.disable_progress_output
 
@@ -417,6 +452,7 @@ def main():
                 ffmpeg_config=ffmpeg_config,
                 replaceimg=replaceimg,
                 mosaicsize=mosaicsize,
+                keep_replace_aspect=keep_replace_aspect,
                 disable_progress_output=disable_progress_output
             )
         elif filetype == 'image':
@@ -432,7 +468,8 @@ def main():
                 enable_preview=enable_preview,
                 keep_metadata=keep_metadata,
                 replaceimg=replaceimg,
-                mosaicsize=mosaicsize
+                mosaicsize=mosaicsize,
+                keep_replace_aspect=keep_replace_aspect,
             )
         elif filetype is None:
             print(f'Can\'t determine file type of file {ipath}. Skipping...')
