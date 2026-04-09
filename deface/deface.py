@@ -299,7 +299,7 @@ def get_anonymized_image(frame,
 
 
 def parse_cli_args():
-    parser = argparse.ArgumentParser(description='Video anonymization by face detection', add_help=False)
+    parser = argparse.ArgumentParser(description='Image and Video anonymization with automatic face detection', add_help=False)
     parser.add_argument(
         'input', nargs='*',
         help=f'File path(s) or camera device name. It is possible to pass multiple paths by separating them by spaces or by using shell expansion (e.g. `$ deface vids/*.mp4`). Alternatively, you can pass a directory as an input, in which case all files in the directory will be used as inputs. If a camera is installed, a live webcam demo can be started by running `$ deface cam` (which is a shortcut for `$ deface -p \'<video0>\'`.')
