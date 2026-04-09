@@ -54,69 +54,50 @@ To get an overview of usage and available options, run:
 The output may vary depending on your installed version, but it should look similar to this:
 
 ```
-usage: deface [--output O] [--thresh T] [--scale WxH] [--preview] [--boxes]
-              [--draw-scores] [--mask-scale M]
-              [--replacewith {blur,solid,none,img,mosaic}]
-              [--replaceimg REPLACEIMG] [--mosaicsize width] [--keep-audio]
-              [--ffmpeg-config FFMPEG_CONFIG] [--backend {auto,onnxrt,opencv}]
-              [--execution-provider EP] [--version] [--help]
+usage: deface [--output O] [--thresh T] [--scale WxH] [--preview] [--boxes] [--draw-scores] [--disable-progress-output]
+              [--mask-scale M] [--replacewith {blur,solid,none,img,mosaic}] [--replaceimg REPLACEIMG] [--mosaicsize width]
+              [--keep-replace-aspect] [--keep-audio] [--ffmpeg-config FFMPEG_CONFIG] [--backend {auto,onnxrt,opencv}]
+              [--execution-provider EP] [--version] [--keep-metadata] [--help]
               [input ...]
 
-Video anonymization by face detection
+Image and Video anonymization with automatic face detection
 
 positional arguments:
-  input                 File path(s) or camera device name. It is possible to
-                        pass multiple paths by separating them by spaces or by
-                        using shell expansion (e.g. `$ deface vids/*.mp4`).
-                        Alternatively, you can pass a directory as an input,
-                        in which case all files in the directory will be used
-                        as inputs. If a camera is installed, a live webcam
-                        demo can be started by running `$ deface cam` (which
-                        is a shortcut for `$ deface -p '<video0>'`.
+  input                 File path(s) or camera device name. It is possible to pass multiple paths by separating them by spaces or by
+                        using shell expansion (e.g. `$ deface vids/*.mp4`). Alternatively, you can pass a directory as an input, in
+                        which case all files in the directory will be used as inputs. If a camera is installed, a live webcam demo
+                        can be started by running `$ deface cam` (which is a shortcut for `$ deface -p '<video0>'`.
 
-optional arguments:
-  --output O, -o O      Output file name. Defaults to input path + postfix
-                        "_anonymized".
-  --thresh T, -t T      Detection threshold (tune this to trade off between
-                        false positive and false negative rate). Default: 0.2.
-  --scale WxH, -s WxH   Downscale images for network inference to this size
-                        (format: WxH, example: --scale 640x360).
+options:
+  --output O, -o O      Output file name. Defaults to input path + postfix "_anonymized".
+  --thresh T, -t T      Detection threshold (tune this to trade off between false positive and false negative rate). Default: 0.2.
+  --scale WxH, -s WxH   Downscale images for network inference to this size (format: WxH, example: --scale 640x360).
   --preview, -p         Enable live preview GUI (can decrease performance).
   --boxes               Use boxes instead of ellipse masks.
   --draw-scores         Draw detection scores onto outputs.
   --disable-progress-output
                         Disable video progress output to console.
-  --mask-scale M        Scale factor for face masks, to make sure that masks
-                        cover the complete face. Default: 1.3.
+  --mask-scale M        Scale factor for face masks, to make sure that masks cover the complete face. Default: 1.3.
   --replacewith {blur,solid,none,img,mosaic}
-                        Anonymization filter mode for face regions. "blur"
-                        applies a strong gaussian blurring, "solid" draws a
-                        solid black box, "none" does leaves the input
-                        unchanged, "img" replaces the face with a custom image
-                        and "mosaic" replaces the face with mosaic. Default:
-                        "blur".
+                        Anonymization filter mode for face regions. "blur" applies a strong gaussian blurring, "solid" draws a solid
+                        black box, "none" does leaves the input unchanged, "img" replaces the face with a custom image and "mosaic"
+                        replaces the face with mosaic. Default: "blur".
   --replaceimg REPLACEIMG
-                        Anonymization image for face regions. Requires
-                        --replacewith img option.
-  --mosaicsize width    Setting the mosaic size. Requires --replacewith mosaic
-                        option. Default: 20.
-  --keep-audio, -k      Keep audio from video source file and copy it over to
-                        the output (only applies to videos).
+                        Anonymization image for face regions. Requires --replacewith img option.
+  --mosaicsize width    Setting the mosaic size. Requires --replacewith mosaic option. Default: 20.
+  --keep-replace-aspect
+                        Preserve the aspect ratio of the replacement image. Requires --replacewith img option. Default: False.
+  --keep-audio, -k      Keep audio from video source file and copy it over to the output (only applies to videos).
   --ffmpeg-config FFMPEG_CONFIG
-                        FFMPEG config arguments for encoding output videos.
-                        This argument is expected in JSON notation. For a list
-                        of possible options, refer to the ffmpeg-imageio docs.
-                        Default: '{"codec": "libx264"}'.
+                        FFMPEG config arguments for encoding output videos. This argument is expected in JSON notation. For a list of
+                        possible options, refer to the ffmpeg-imageio docs. Default: '{"codec": "libx264"}'.
   --backend {auto,onnxrt,opencv}
-                        Backend for ONNX model execution. Default: "auto"
-                        (prefer onnxrt if available).
+                        Backend for ONNX model execution. Default: "auto" (prefer onnxrt if available).
   --execution-provider EP, --ep EP
-                        Override onnxrt execution provider (see
-                        https://onnxruntime.ai/docs/execution-providers/). If
-                        not specified, the presumably fastest available one
-                        will be automatically selected. Only used if backend is
-                        onnxrt.
+                        Override onnxrt execution provider (see https://onnxruntime.ai/docs/execution-providers/). If not specified,
+                        the presumably fastest available one will be automatically selected. Only used if backend is onnxrt.
   --version             Print version number and exit.
+  --keep-metadata, -m   Keep metadata of the original image. Default : False.
   --help, -h            Show this help message and exit.
 ```
 
