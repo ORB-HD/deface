@@ -109,3 +109,6 @@ ENV/
 .vscode/
 
 deface/_version.py
+
+# Local visual smoke-test output
+_test/**/*.jpg
