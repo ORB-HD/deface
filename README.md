@@ -228,7 +228,7 @@ If you your setup doesn't fit with these recommendations, look into the availabl
 
 ### SCRFD (default)
 
-The default detector is SCRFD ([code](https://github.com/deepinsight/insightface/tree/master/detection/scrfd), [paper](https://arxiv.org/abs/2105.04706)), a Sample and Computation Redistribution for Face Detection approach accepted by ICLR-2022.
+The default detector is SCRFD ([code](https://github.com/deepinsight/insightface/tree/master/detection/scrfd), [paper](https://arxiv.org/abs/2105.04714)), a Sample and Computation Redistribution for Face Detection approach accepted by ICLR-2022.
 SCRFD uses an efficient FPN architecture with distance-based bounding box and keypoint decoding, providing higher recall on small and occluded faces compared to CenterFace.
 The included model (`scrfd_10g.onnx`, 17MB) is the 10GFlops variant from the InsightFace `buffalo_l` model pack, trained on the WIDER FACE dataset.
 
