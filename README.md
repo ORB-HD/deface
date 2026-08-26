@@ -7,16 +7,18 @@ It works by first detecting all human faces in each video frame and then applyin
 By default all audio tracks are discarded as well.
 
 
-Original frame | `deface` output (using default options)
-:--:|:--:
-![examples/city.jpg](examples/city.jpg) | ![$ deface examples/city.jpg](examples/city_anonymized.jpg)
+Original frame | CenterFace output | SCRFD output (default)
+:--:|:--:|:--:
+![examples/city.jpg](examples/city.jpg) | ![$ deface examples/city.jpg --detector centerface](examples/city_anonymized.jpg) | ![$ deface examples/city.jpg](examples/city_anonymized_scrfd.jpg)
+
+![Gradio Web UI](examples/gradio_ui.jpg)
 
 
 ## Installation
 
-`deface` supports all commonly used operating systems (Linux, Windows, MacOS), but it requires using a command-line shell such as bash. There are currently no plans of creating a graphical user interface.
+`deface` supports all commonly used operating systems (Linux, Windows, MacOS).
 
-The recommended way of installing `deface` is via the `pip` package manager. This requires that you have Python 3.6 or later installed on your system. It is recommended to set up and activate a new [virtual environment](https://realpython.com/python-virtual-environments-a-primer/) first. Then you can install the latest release of `deface` and all necessary dependencies by running:
+The recommended way of installing `deface` is via the `pip` package manager. This requires that you have Python 3.8 or later installed on your system. It is recommended to set up and activate a new [virtual environment](https://realpython.com/python-virtual-environments-a-primer/) first. Then you can install the latest release of `deface` and all necessary dependencies by running:
 
     $ python3 -m pip install deface
 
@@ -25,6 +27,25 @@ Alternatively, if you want to use the latest (unreleased) revision directly from
     $ python3 -m pip install 'git+https://github.com/ORB-HD/deface'
 
 This will only install the dependencies that are strictly required for running the tool. If you want to speed up processing by enabling hardware acceleration, you will need to manually install additional packages, see [Hardware acceleration](#hardware-acceleration)
+
+
+### Graphical User Interface (optional)
+
+If you prefer a web-based UI over the command line, `deface` includes an optional Gradio interface. Install the extra dependency and launch it with:
+
+    $ python3 -m pip install 'deface[ui]'
+    $ deface-ui
+
+Or run it directly as a Python module:
+
+    $ python -m deface.ui
+
+The UI opens in your browser at `http://localhost:7860` and provides two tabs:
+
+- **Image**: Upload a photo, tune detection and anonymization settings, preview original vs. anonymized side-by-side, and download the result.
+- **Video**: Upload a video, apply the same anonymization options, and download the processed output.
+
+All CLI options (detector, threshold, anonymization mode, mask scale, mosaic size, etc.) are available as interactive controls in the UI.
 
 
 ## Usage
@@ -55,11 +76,12 @@ The output may vary depending on your installed version, but it should look simi
 
 ```
 usage: deface [--output O] [--thresh T] [--scale WxH] [--preview] [--boxes]
-              [--draw-scores] [--mask-scale M]
+              [--draw-scores] [--disable-progress-output] [--mask-scale M]
               [--replacewith {blur,solid,none,img,mosaic}]
               [--replaceimg REPLACEIMG] [--mosaicsize width] [--keep-audio]
               [--ffmpeg-config FFMPEG_CONFIG] [--backend {auto,onnxrt,opencv}]
-              [--execution-provider EP] [--version] [--help]
+              [--detector {centerface,scrfd}]
+              [--execution-provider EP] [--version] [--keep-metadata] [--help]
               [input ...]
 
 Video anonymization by face detection
@@ -110,6 +132,9 @@ optional arguments:
   --backend {auto,onnxrt,opencv}
                         Backend for ONNX model execution. Default: "auto"
                         (prefer onnxrt if available).
+  --detector {centerface,scrfd}
+                        Face detector to use. "scrfd" is the default
+                        detector, "centerface" is the original detector.
   --execution-provider EP, --ep EP
                         Override onnxrt execution provider (see
                         https://onnxruntime.ai/docs/execution-providers/). If
@@ -130,7 +155,9 @@ By default, each detected face is anonymized by applying a blur filter to an ell
 
     $ deface examples/city.jpg --boxes --replacewith solid -o examples/city_anonymized_boxes.jpg
 
-<img src="examples/city_anonymized_boxes.jpg" width="70%" alt="$ deface examples/city.jpg --enable-boxes --replacewith solid -o examples/city_anonymized_boxes.jpg"/>
+CenterFace | SCRFD (default)
+:--:|:--:
+<img src="examples/city_anonymized_boxes.jpg" width="70%" alt="CenterFace boxes"/> | <img src="examples/city_anonymized_boxes_scrfd.jpg" width="70%" alt="SCRFD boxes"/>
 
 ### Mosaic anonymization
 
@@ -140,7 +167,9 @@ Usage example:
 
     $ deface examples/city.jpg --replacewith mosaic --mosaicsize 20 -o examples/city_anonymized_mosaic.jpg
 
-<img src="examples/city_anonymized_mosaic.jpg" width="70%" alt="$ deface examples/city.jpg --replacewith mosaic --mosaicsize 20 -o examples/city_anonymized_mosaic.jpg"/>
+CenterFace | SCRFD (default)
+:--:|:--:
+<img src="examples/city_anonymized_mosaic.jpg" width="70%" alt="CenterFace mosaic"/> | <img src="examples/city_anonymized_mosaic_scrfd.jpg" width="70%" alt="SCRFD mosaic"/>
 
 
 
@@ -166,7 +195,9 @@ If you are interested in seeing the faceness score (a score between 0 and 1 that
 
     $ deface examples/city.jpg --draw-scores -o examples/city_anonymized_scores.jpg
 
-<img src="examples/city_anonymized_scores.jpg" width="70%" alt="$ deface examples/city.jpg --draw-scores -o examples/city_anonymized_scores.jpg"/>
+CenterFace | SCRFD (default)
+:--:|:--:
+<img src="examples/city_anonymized_scores.jpg" width="70%" alt="CenterFace scores"/> | <img src="examples/city_anonymized_scores_scrfd.jpg" width="70%" alt="SCRFD scores"/>
 
 This option can be useful to figure out an optimal value for the detection threshold that can then be set through the `--thresh` option.
 
@@ -219,11 +250,28 @@ If you your setup doesn't fit with these recommendations, look into the availabl
 
 ## How it works
 
-The included face detection system is based on CenterFace ([code](https://github.com/Star-Clouds/centerface), [paper](https://arxiv.org/abs/1911.03599)), a deep neural network optimized for fast but reliable detection of human faces in photos.
-The network was trained on the [WIDER FACE](http://shuoyang1213.me/WIDERFACE/) dataset, which contains annotated photos showing faces in a wide variety of scales, poses and occlusions.
+`deface` supports two face detection backends, selectable via the `--detector` flag:
 
-Although the face detector is originally intended to be used for normal 2D images, `deface` can also use it to detect faces in video data by analyzing each video frame independently.
-The face bounding boxes predicted by the CenterFace detector are then used as masks to determine where to apply anonymization filters.
+### SCRFD (default)
+
+The default detector is SCRFD ([code](https://github.com/deepinsight/insightface/tree/master/detection/scrfd), [paper](https://arxiv.org/abs/2105.04714)), a Sample and Computation Redistribution for Face Detection approach accepted by ICLR-2022.
+SCRFD uses an efficient FPN architecture with distance-based bounding box and keypoint decoding.
+The included model (`scrfd_10g.onnx`, 17MB) is the 10GFlops variant from the InsightFace `buffalo_l` model pack, trained on the WIDER FACE dataset.
+
+| Model | Easy | Medium | Hard | FLOPs | Params |
+|-------|------|--------|------|-------|--------|
+| SCRFD-10G (included) | 95.16 | 93.87 | 83.05 | 10G | 3.86M |
+| CenterFace (included) | 93.5 | 92.4 | 87.5 | — | — |
+
+WIDER FACE validation set mAP (%). SCRFD numbers from [arXiv:2105.04714](https://arxiv.org/abs/2105.04714) Table 4 (VGA 640×480). CenterFace numbers from [arXiv:1911.03599](https://arxiv.org/abs/1911.03599).
+
+### CenterFace
+
+CenterFace ([code](https://github.com/Star-Clouds/centerface), [paper](https://arxiv.org/abs/1911.03599)) is available via `--detector centerface`.
+It is a deep neural network optimized for fast but reliable detection of human faces in photos, also trained on the WIDER FACE dataset.
+
+Both detectors analyze each video frame independently.
+The face bounding boxes predicted by the detector are then used as masks to determine where to apply anonymization filters.
 
 
 ## Credits

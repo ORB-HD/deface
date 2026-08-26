@@ -29,15 +29,17 @@ dependencies = [
 cuda = ["onnx", "onnxruntime-cuda"]
 directml = ["onnx", "onnxruntime-directml"]
 openvino = ["onnx", "onnxruntime-openvino"]
+ui = ["gradio>=5.0"]
 
 [project.scripts]
 deface = "deface.deface:main"
+deface-ui = "deface.ui:main"
 
 [tool.setuptools]
 packages = ["deface"]
 
 [tool.setuptools.package-data]
-deface = ["centerface.onnx"]
+deface = ["centerface.onnx", "scrfd_10g.onnx"]
 
 [tool.setuptools_scm]
 write_to = "deface/_version.py"
