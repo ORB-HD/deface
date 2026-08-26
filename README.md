@@ -55,11 +55,12 @@ The output may vary depending on your installed version, but it should look simi
 
 ```
 usage: deface [--output O] [--thresh T] [--scale WxH] [--preview] [--boxes]
-              [--draw-scores] [--mask-scale M]
+              [--draw-scores] [--disable-progress-output] [--mask-scale M]
               [--replacewith {blur,solid,none,img,mosaic}]
               [--replaceimg REPLACEIMG] [--mosaicsize width] [--keep-audio]
               [--ffmpeg-config FFMPEG_CONFIG] [--backend {auto,onnxrt,opencv}]
-              [--execution-provider EP] [--version] [--help]
+              [--detector {centerface,scrfd}]
+              [--execution-provider EP] [--version] [--keep-metadata] [--help]
               [input ...]
 
 Video anonymization by face detection
@@ -110,6 +111,10 @@ optional arguments:
   --backend {auto,onnxrt,opencv}
                         Backend for ONNX model execution. Default: "auto"
                         (prefer onnxrt if available).
+  --detector {centerface,scrfd}
+                        Face detector to use. "scrfd" provides higher recall
+                        on small/occluded faces (default), "centerface" is the
+                        legacy detector for backward compatibility.
   --execution-provider EP, --ep EP
                         Override onnxrt execution provider (see
                         https://onnxruntime.ai/docs/execution-providers/). If
@@ -219,11 +224,26 @@ If you your setup doesn't fit with these recommendations, look into the availabl
 
 ## How it works
 
-The included face detection system is based on CenterFace ([code](https://github.com/Star-Clouds/centerface), [paper](https://arxiv.org/abs/1911.03599)), a deep neural network optimized for fast but reliable detection of human faces in photos.
-The network was trained on the [WIDER FACE](http://shuoyang1213.me/WIDERFACE/) dataset, which contains annotated photos showing faces in a wide variety of scales, poses and occlusions.
+`deface` supports two face detection backends, selectable via the `--detector` flag:
 
-Although the face detector is originally intended to be used for normal 2D images, `deface` can also use it to detect faces in video data by analyzing each video frame independently.
-The face bounding boxes predicted by the CenterFace detector are then used as masks to determine where to apply anonymization filters.
+### SCRFD (default)
+
+The default detector is SCRFD ([code](https://github.com/deepinsight/insightface/tree/master/detection/scrfd), [paper](https://arxiv.org/abs/2105.04706)), a Sample and Computation Redistribution for Face Detection approach accepted by ICLR-2022.
+SCRFD uses an efficient FPN architecture with distance-based bounding box and keypoint decoding, providing higher recall on small and occluded faces compared to CenterFace.
+The included model (`scrfd_10g.onnx`, 17MB) is the 10GFlops variant from the InsightFace `buffalo_l` model pack, trained on the WIDER FACE dataset.
+
+| Variant | Easy | Medium | Hard | FLOPs | Params |
+|---------|------|--------|------|-------|--------|
+| SCRFD-10G (included) | 95.16 | 93.87 | 83.05 | 10G | 3.86M |
+| SCRFD-2.5G | 93.78 | 92.16 | 77.87 | 2.5G | 0.67M |
+
+### CenterFace (legacy)
+
+The legacy CenterFace detector ([code](https://github.com/Star-Clouds/centerface), [paper](https://arxiv.org/abs/1911.03599)) is still available via `--detector centerface`.
+It is a deep neural network optimized for fast but reliable detection of human faces in photos, also trained on the WIDER FACE dataset.
+
+Both detectors analyze each video frame independently.
+The face bounding boxes predicted by the detector are then used as masks to determine where to apply anonymization filters.
 
 
 ## Credits
