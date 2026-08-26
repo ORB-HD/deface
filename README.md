@@ -7,9 +7,9 @@ It works by first detecting all human faces in each video frame and then applyin
 By default all audio tracks are discarded as well.
 
 
-Original frame | `deface` output (using default options)
-:--:|:--:
-![examples/city.jpg](examples/city.jpg) | ![$ deface examples/city.jpg](examples/city_anonymized.jpg)
+Original frame | CenterFace output (legacy) | SCRFD output (default)
+:--:|:--:|:--:
+![examples/city.jpg](examples/city.jpg) | ![$ deface examples/city.jpg --detector centerface](examples/city_anonymized.jpg) | ![$ deface examples/city.jpg](examples/city_anonymized_scrfd.jpg)
 
 
 ## Installation
@@ -135,7 +135,9 @@ By default, each detected face is anonymized by applying a blur filter to an ell
 
     $ deface examples/city.jpg --boxes --replacewith solid -o examples/city_anonymized_boxes.jpg
 
-<img src="examples/city_anonymized_boxes.jpg" width="70%" alt="$ deface examples/city.jpg --enable-boxes --replacewith solid -o examples/city_anonymized_boxes.jpg"/>
+CenterFace (legacy) | SCRFD (default)
+:--:|:--:
+<img src="examples/city_anonymized_boxes.jpg" width="70%" alt="CenterFace boxes"/> | <img src="examples/city_anonymized_boxes_scrfd.jpg" width="70%" alt="SCRFD boxes"/>
 
 ### Mosaic anonymization
 
@@ -145,7 +147,9 @@ Usage example:
 
     $ deface examples/city.jpg --replacewith mosaic --mosaicsize 20 -o examples/city_anonymized_mosaic.jpg
 
-<img src="examples/city_anonymized_mosaic.jpg" width="70%" alt="$ deface examples/city.jpg --replacewith mosaic --mosaicsize 20 -o examples/city_anonymized_mosaic.jpg"/>
+CenterFace (legacy) | SCRFD (default)
+:--:|:--:
+<img src="examples/city_anonymized_mosaic.jpg" width="70%" alt="CenterFace mosaic"/> | <img src="examples/city_anonymized_mosaic_scrfd.jpg" width="70%" alt="SCRFD mosaic"/>
 
 
 
@@ -171,7 +175,9 @@ If you are interested in seeing the faceness score (a score between 0 and 1 that
 
     $ deface examples/city.jpg --draw-scores -o examples/city_anonymized_scores.jpg
 
-<img src="examples/city_anonymized_scores.jpg" width="70%" alt="$ deface examples/city.jpg --draw-scores -o examples/city_anonymized_scores.jpg"/>
+CenterFace (legacy) | SCRFD (default)
+:--:|:--:
+<img src="examples/city_anonymized_scores.jpg" width="70%" alt="CenterFace scores"/> | <img src="examples/city_anonymized_scores_scrfd.jpg" width="70%" alt="SCRFD scores"/>
 
 This option can be useful to figure out an optimal value for the detection threshold that can then be set through the `--thresh` option.
 
