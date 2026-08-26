@@ -14,9 +14,9 @@ Original frame | CenterFace output | SCRFD output (default)
 
 ## Installation
 
-`deface` supports all commonly used operating systems (Linux, Windows, MacOS), but it requires using a command-line shell such as bash. There are currently no plans of creating a graphical user interface.
+`deface` supports all commonly used operating systems (Linux, Windows, MacOS).
 
-The recommended way of installing `deface` is via the `pip` package manager. This requires that you have Python 3.6 or later installed on your system. It is recommended to set up and activate a new [virtual environment](https://realpython.com/python-virtual-environments-a-primer/) first. Then you can install the latest release of `deface` and all necessary dependencies by running:
+The recommended way of installing `deface` is via the `pip` package manager. This requires that you have Python 3.8 or later installed on your system. It is recommended to set up and activate a new [virtual environment](https://realpython.com/python-virtual-environments-a-primer/) first. Then you can install the latest release of `deface` and all necessary dependencies by running:
 
     $ python3 -m pip install deface
 
@@ -25,6 +25,25 @@ Alternatively, if you want to use the latest (unreleased) revision directly from
     $ python3 -m pip install 'git+https://github.com/ORB-HD/deface'
 
 This will only install the dependencies that are strictly required for running the tool. If you want to speed up processing by enabling hardware acceleration, you will need to manually install additional packages, see [Hardware acceleration](#hardware-acceleration)
+
+
+### Graphical User Interface (optional)
+
+If you prefer a web-based UI over the command line, `deface` includes an optional Gradio interface. Install the extra dependency and launch it with:
+
+    $ python3 -m pip install 'deface[ui]'
+    $ deface-ui
+
+Or run it directly as a Python module:
+
+    $ python -m deface.ui
+
+The UI opens in your browser at `http://localhost:7860` and provides two tabs:
+
+- **Image**: Upload a photo, tune detection and anonymization settings, preview original vs. anonymized side-by-side, and download the result.
+- **Video**: Upload a video, apply the same anonymization options, and download the processed output.
+
+All CLI options (detector, threshold, anonymization mode, mask scale, mosaic size, etc.) are available as interactive controls in the UI.
 
 
 ## Usage
@@ -240,7 +259,9 @@ The included model (`scrfd_10g.onnx`, 17MB) is the 10GFlops variant from the Ins
 | Model | Easy | Medium | Hard | FLOPs | Params |
 |-------|------|--------|------|-------|--------|
 | SCRFD-10G (included) | 95.16 | 93.87 | 83.05 | 10G | 3.86M |
-| CenterFace (included) | 93.2 | 92.1 | 87.3 | — | — |
+| CenterFace (included) | 93.5 | 92.4 | 87.5 | — | — |
+
+WIDER FACE validation set mAP (%). SCRFD numbers from [arXiv:2105.04714](https://arxiv.org/abs/2105.04714) Table 4 (VGA 640×480). CenterFace numbers from [arXiv:1911.03599](https://arxiv.org/abs/1911.03599).
 
 ### CenterFace
 
