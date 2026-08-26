@@ -16,6 +16,7 @@ import cv2
 
 from deface import __version__
 from deface.centerface import CenterFace
+from deface.scrfd import SCRFD
 
 
 def scale_bb(x1, y1, x2, y2, mask_scale=1.0):
@@ -105,7 +106,7 @@ def cam_read_iter(reader):
 def video_detect(
         ipath: str,
         opath: str,
-        centerface: CenterFace,
+        detector,
         threshold: float,
         enable_preview: bool,
         cam: bool,
@@ -160,7 +161,7 @@ def video_detect(
 
     for frame in read_iter:
         # Perform network inference, get bb dets but discard landmark predictions
-        dets, _ = centerface(frame, threshold=threshold)
+        dets, _ = detector(frame, threshold=threshold)
 
         anonymize_frame(
             dets, frame, mask_scale=mask_scale,
@@ -186,7 +187,7 @@ def video_detect(
 def image_detect(
         ipath: str,
         opath: str,
-        centerface: CenterFace,
+        detector,
         threshold: float,
         replacewith: str,
         mask_scale: float,
@@ -205,7 +206,7 @@ def image_detect(
         exif_dict = metadata.get("exif", None)
 
     # Perform network inference, get bb dets but discard landmark predictions
-    dets, _ = centerface(frame, threshold=threshold)
+    dets, _ = detector(frame, threshold=threshold)
 
     anonymize_frame(
         dets, frame, mask_scale=mask_scale,
@@ -255,8 +256,8 @@ def get_anonymized_image(frame,
     returns frame
     """
 
-    centerface = CenterFace(in_shape=None, backend='auto')
-    dets, _ = centerface(frame, threshold=threshold)
+    detector = SCRFD(in_shape=None, backend='auto')
+    dets, _ = detector(frame, threshold=threshold)
 
     anonymize_frame(
         dets, frame, mask_scale=mask_scale,
@@ -316,6 +317,9 @@ def parse_cli_args():
         '--backend', default='auto', choices=['auto', 'onnxrt', 'opencv'],
         help='Backend for ONNX model execution. Default: "auto" (prefer onnxrt if available).')
     parser.add_argument(
+        '--detector', default='scrfd', choices=['centerface', 'scrfd'],
+        help='Face detector backend to use. Default: "scrfd".')
+    parser.add_argument(
         '--execution-provider', '--ep', default=None, metavar='EP',
         help='Override onnxrt execution provider (see https://onnxruntime.ai/docs/execution-providers/). If not specified, the presumably fastest available one will be automatically selected. Only used if backend is onnxrt.')
     parser.add_argument(
@@ -369,6 +373,7 @@ def main():
     execution_provider = args.execution_provider
     mosaicsize = args.mosaicsize
     keep_metadata = args.keep_metadata
+    detector_name = args.detector
     replaceimg = None
     disable_progress_output = args.disable_progress_output
 
@@ -381,7 +386,10 @@ def main():
 
 
     # TODO: scalar downscaling setting (-> in_shape), preserving aspect ratio
-    centerface = CenterFace(in_shape=in_shape, backend=backend, override_execution_provider=execution_provider)
+    if detector_name == 'centerface':
+        detector = CenterFace(in_shape=in_shape, backend=backend, override_execution_provider=execution_provider)
+    else:  # 'scrfd'
+        detector = SCRFD(in_shape=in_shape, backend=backend, override_execution_provider=execution_provider)
 
     multi_file = len(ipaths) > 1
     if multi_file:
@@ -404,7 +412,7 @@ def main():
             video_detect(
                 ipath=ipath,
                 opath=opath,
-                centerface=centerface,
+                detector=detector,
                 threshold=threshold,
                 cam=is_cam,
                 replacewith=replacewith,
@@ -423,7 +431,7 @@ def main():
             image_detect(
                 ipath=ipath,
                 opath=opath,
-                centerface=centerface,
+                detector=detector,
                 threshold=threshold,
                 replacewith=replacewith,
                 mask_scale=mask_scale,
