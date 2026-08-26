@@ -11,6 +11,8 @@ Original frame | CenterFace output | SCRFD output (default)
 :--:|:--:|:--:
 ![examples/city.jpg](examples/city.jpg) | ![$ deface examples/city.jpg --detector centerface](examples/city_anonymized.jpg) | ![$ deface examples/city.jpg](examples/city_anonymized_scrfd.jpg)
 
+![Gradio Web UI](examples/gradio_ui.jpg)
+
 
 ## Installation
 
