@@ -7,7 +7,7 @@ It works by first detecting all human faces in each video frame and then applyin
 By default all audio tracks are discarded as well.
 
 
-Original frame | CenterFace output (legacy) | SCRFD output (default)
+Original frame | CenterFace output | SCRFD output (default)
 :--:|:--:|:--:
 ![examples/city.jpg](examples/city.jpg) | ![$ deface examples/city.jpg --detector centerface](examples/city_anonymized.jpg) | ![$ deface examples/city.jpg](examples/city_anonymized_scrfd.jpg)
 
@@ -112,9 +112,8 @@ optional arguments:
                         Backend for ONNX model execution. Default: "auto"
                         (prefer onnxrt if available).
   --detector {centerface,scrfd}
-                        Face detector to use. "scrfd" provides higher recall
-                        on small/occluded faces (default), "centerface" is the
-                        legacy detector for backward compatibility.
+                        Face detector to use. "scrfd" is the default
+                        detector, "centerface" is the original detector.
   --execution-provider EP, --ep EP
                         Override onnxrt execution provider (see
                         https://onnxruntime.ai/docs/execution-providers/). If
@@ -135,7 +134,7 @@ By default, each detected face is anonymized by applying a blur filter to an ell
 
     $ deface examples/city.jpg --boxes --replacewith solid -o examples/city_anonymized_boxes.jpg
 
-CenterFace (legacy) | SCRFD (default)
+CenterFace | SCRFD (default)
 :--:|:--:
 <img src="examples/city_anonymized_boxes.jpg" width="70%" alt="CenterFace boxes"/> | <img src="examples/city_anonymized_boxes_scrfd.jpg" width="70%" alt="SCRFD boxes"/>
 
@@ -147,7 +146,7 @@ Usage example:
 
     $ deface examples/city.jpg --replacewith mosaic --mosaicsize 20 -o examples/city_anonymized_mosaic.jpg
 
-CenterFace (legacy) | SCRFD (default)
+CenterFace | SCRFD (default)
 :--:|:--:
 <img src="examples/city_anonymized_mosaic.jpg" width="70%" alt="CenterFace mosaic"/> | <img src="examples/city_anonymized_mosaic_scrfd.jpg" width="70%" alt="SCRFD mosaic"/>
 
@@ -175,7 +174,7 @@ If you are interested in seeing the faceness score (a score between 0 and 1 that
 
     $ deface examples/city.jpg --draw-scores -o examples/city_anonymized_scores.jpg
 
-CenterFace (legacy) | SCRFD (default)
+CenterFace | SCRFD (default)
 :--:|:--:
 <img src="examples/city_anonymized_scores.jpg" width="70%" alt="CenterFace scores"/> | <img src="examples/city_anonymized_scores_scrfd.jpg" width="70%" alt="SCRFD scores"/>
 
@@ -235,17 +234,17 @@ If you your setup doesn't fit with these recommendations, look into the availabl
 ### SCRFD (default)
 
 The default detector is SCRFD ([code](https://github.com/deepinsight/insightface/tree/master/detection/scrfd), [paper](https://arxiv.org/abs/2105.04714)), a Sample and Computation Redistribution for Face Detection approach accepted by ICLR-2022.
-SCRFD uses an efficient FPN architecture with distance-based bounding box and keypoint decoding, providing higher recall on small and occluded faces compared to CenterFace.
+SCRFD uses an efficient FPN architecture with distance-based bounding box and keypoint decoding.
 The included model (`scrfd_10g.onnx`, 17MB) is the 10GFlops variant from the InsightFace `buffalo_l` model pack, trained on the WIDER FACE dataset.
 
-| Variant | Easy | Medium | Hard | FLOPs | Params |
-|---------|------|--------|------|-------|--------|
+| Model | Easy | Medium | Hard | FLOPs | Params |
+|-------|------|--------|------|-------|--------|
 | SCRFD-10G (included) | 95.16 | 93.87 | 83.05 | 10G | 3.86M |
-| SCRFD-2.5G | 93.78 | 92.16 | 77.87 | 2.5G | 0.67M |
+| CenterFace (included) | 93.2 | 92.1 | 87.3 | — | — |
 
-### CenterFace (legacy)
+### CenterFace
 
-The legacy CenterFace detector ([code](https://github.com/Star-Clouds/centerface), [paper](https://arxiv.org/abs/1911.03599)) is still available via `--detector centerface`.
+CenterFace ([code](https://github.com/Star-Clouds/centerface), [paper](https://arxiv.org/abs/1911.03599)) is available via `--detector centerface`.
 It is a deep neural network optimized for fast but reliable detection of human faces in photos, also trained on the WIDER FACE dataset.
 
 Both detectors analyze each video frame independently.
