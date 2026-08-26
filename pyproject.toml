@@ -29,9 +29,11 @@ dependencies = [
 cuda = ["onnx", "onnxruntime-cuda"]
 directml = ["onnx", "onnxruntime-directml"]
 openvino = ["onnx", "onnxruntime-openvino"]
+ui = ["gradio>=5.0"]
 
 [project.scripts]
 deface = "deface.deface:main"
+deface-ui = "deface.ui:main"
 
 [tool.setuptools]
 packages = ["deface"]
