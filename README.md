@@ -9,7 +9,7 @@ By default all audio tracks are discarded as well.
 
 Original frame | `deface` output (using default options)
 :--:|:--:
-![examples/city.jpg](examples/city.jpg) | ![$ deface examples/city.jpg](examples/city_anonymized.jpg)
+![examples/city.jpg](examples/city.jpg) | ![deface examples/city.jpg](examples/city_anonymized.jpg)
 
 
 ## Installation
