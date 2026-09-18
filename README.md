@@ -9,7 +9,7 @@ By default all audio tracks are discarded as well.
 
 Original frame | `deface` output (using default options)
 :--:|:--:
-![examples/city.jpg](examples/city.jpg) | ![$ deface examples/city.jpg](examples/city_anonymized.jpg)
+![examples/city.jpg](examples/city.jpg) | ![deface examples/city.jpg](examples/city_anonymized.jpg)
 
 
 ## Installation
@@ -157,7 +157,7 @@ To demonstrate the effects of a threshold that is set too low or too high, see t
 
 `--thresh 0.02` (notice the false positives, e.g. at hand regions) | `--thresh 0.7` (notice the false negatives, especially at partially occluded faces)
 :--:|:--:
-![examples/city_anonymized_thresh0.02.jpg](examples/city_anonymized_thresh0.02.jpg) | ![$ deface examples/city_anonymized_thresh0.7.jpg](examples/city_anonymized_thresh0.7.jpg)
+![examples/city_anonymized_thresh0.02.jpg](examples/city_anonymized_thresh0.02.jpg) | ![deface examples/city_anonymized_thresh0.7.jpg](examples/city_anonymized_thresh0.7.jpg)
 
 
 ### Drawing detection score overlays
